@@ -1,0 +1,52 @@
+<launch>
+  <arg name="robot" default="youbot"/>
+  <arg name="paused" value="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" value="true"/>
+
+  <!-- Gazebo world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="use_sim_time" value="true"/>
+    <arg name="debug" value="false"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="world_name" value="$(find bringup)/worlds/circuit2.world"/>
+  </include>
+  
+  <!-- upload robot description -->
+  <param name="robot_description" command="$(find xacro)/xacro.py --inorder $(find description)/urdf/robot.urdf.xacro"/>
+
+  <!-- Gazebo model spawner -->
+  <node name="youbot_model" pkg="gazebo_ros" type="spawn_model"
+        args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
+
+  <!-- Scan unifier -->
+  <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
+  	<rosparam param="input_scans">["scan_base_lidar_front","scan_base_lidar_rear"]</rosparam>
+  	<param name="loop_rate" value="20.0"/>
+   	  <remap from="scan_unified" to="/scan_unified"/>
+  </node>
+
+  <!-- Base controller muxer -->
+  <rosparam file="$(find bringup)/controller/base_controller.yaml" command="load" /> 
+  <node pkg="controller_manager" type="spawner" name="base_controller_spawner" args="base_controller" respawn="false" output="screen"/>
+
+  <!-- Velocity muxer -->
+
+  <node pkg="twist_mux" type="twist_mux" ns="mir_command_tools" name="twist_mux" output="screen">
+    <remap from="cmd_vel_out" to="/cmd_vel"/>
+    <remap from="cmd_vel_prio_high" to="/cmd_vel_prio_high"/>
+    <remap from="cmd_vel_prio_medium" to="/cmd_vel_prio_medium"/>
+    <remap from="cmd_vel_prio_low" to="/cmd_vel_prio_low"/>
+    <rosparam file="$(find bringup)/controller/locks.yaml"  command="load"/>
+    <rosparam file="$(find bringup)/controller/topics.yaml" command="load"/>
+  </node>
+  
+  <!-- State publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
+  <!-- run RViz node (visualization) -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bringup)/rviz/youbot.rviz"/>
+
+</launch>

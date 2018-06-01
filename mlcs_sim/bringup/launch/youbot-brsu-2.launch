@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-
-  <!-- launch base controller -->
-  <include file="$(find bringup)/launch/base_controller.launch" />
-  <include file="$(find bringup)/launch/twist_mux.launch" />
-
-</launch>
