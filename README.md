@@ -1,4 +1,2 @@
-# Factory_Simulation_Gazebo
-Youbot RL (SLAM &amp; Navi)
-
-reinforcement learning factory env.
+# Factory_RL_Gazebo
+Youbot Reinforcement Learning in Factory environment (SLAM &amp; Navi)
