@@ -1,7 +1,7 @@
 # Factory_RL_Gazebo
 Youbot Reinforcement Learning in Factory environment (SLAM &amp; Navi)
 
-This work uses Gym-gazebo.
+This work uses gym-gazebo.
 Visit [erlerobotics/gym-gazebo](https://github.com/erlerobot/gym-gazebo) for more information and videos.
 
 ## Installation
