@@ -26,5 +26,5 @@ Sometimes, after ending or killing the simulation `gzserver` and `rosmaster` sta
 We recommend creating an alias to kill those processes.
 
 ```bash
-echo "alias k='killall -9 gzserver gzclient roslaunch rosmaster rviz'" >> ~/.bashrc
+echo "alias killgazebo='killall -9 gzserver gzclient roslaunch rosmaster rviz'" >> ~/.bashrc
 ```
