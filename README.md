@@ -7,7 +7,15 @@ Visit [erlerobotics/gym-gazebo](https://github.com/erlerobot/gym-gazebo) for mor
 ## Installation
 One-line install script available.
 ```bash
+cd Factory_RL_Gazebo
 sh setup.sh
+```
+## Dependency package
+```bash
+cd catkin_ws/src
+git clone https://github.com/MLCS-Yonsei/mlcs_sim
+cd ..
+catkin_make
 ```
 
 ## Usage
@@ -15,7 +23,7 @@ sh setup.sh
 ### Running an environment
 
 ```bash
-cd example
+cd Factory_RL_Gazebo/example
 python main.py
 ```
 
@@ -26,5 +34,14 @@ Sometimes, after ending or killing the simulation `gzserver` and `rosmaster` sta
 We recommend creating an alias to kill those processes.
 
 ```bash
-echo "alias killgazebo='killall -9 gzserver gzclient roslaunch rosmaster rviz'" >> ~/.bashrc
+echo "alias killgazebo='killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient rviz'" >> ~/.bashrc
+```
+
+### Lidar plugin
+If your environment doesn't support GPU calculation, you should chage lidar module in `mlcs_sim/description/urdf/hokuyo_urg04_laser.gazebo.xacro`.
+
+```bash
+`libgazebo_ros_gpu_laser.so`
+to
+`libgazebo_ros_laser.so`
 ```

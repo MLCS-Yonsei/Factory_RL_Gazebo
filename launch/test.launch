@@ -9,11 +9,11 @@
     <arg name="use_sim_time" value="true"/>
     <arg name="debug" value="false"/>
     <arg name="gui" value="$(arg gui)"/>
-    <arg name="world_name" value="$(find bringup)/worlds/circuit2.world"/>
+    <arg name="world_name" value="$(env GYM_GAZEBO_WORLD)"/>
   </include>
   
   <!-- upload robot description -->
-  <param name="robot_description" command="$(find xacro)/xacro.py --inorder $(find description)/urdf/robot.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find description)/urdf/robot.urdf.xacro"/>
 
   <!-- Gazebo model spawner -->
   <node name="youbot_model" pkg="gazebo_ros" type="spawn_model"
@@ -21,7 +21,7 @@
 
   <!-- Scan unifier -->
   <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
-  	<rosparam param="input_scans">["scan_base_lidar_front","scan_base_lidar_rear"]</rosparam>
+  	<rosparam param="input_scans">["scan_front","scan_rear"]</rosparam>
   	<param name="loop_rate" value="20.0"/>
    	  <remap from="scan_unified" to="/scan_unified"/>
   </node>

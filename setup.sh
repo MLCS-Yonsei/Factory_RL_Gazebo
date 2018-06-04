@@ -1,26 +1,42 @@
-#Gazebo8#
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get remove .*gazebo.* -y
-sudo apt-get update -y
-sudo apt-get install libignition-math2 -y
-sudo apt-get install libgazebo7 -y
-sudo apt-get install gazebo7 -y
-sudo apt-get install libgazebo7-dev -y
-sudo apt-get install ros-kinetic-gazebo-*
-sudo apt-get install libignition-math3 -y
-sudo apt-get install libgazebo8 -y
-sudo apt-get install gazebo8 -y
-sudo apt-get install ros-kinetic-gazebo8-*
-sudo apt-get install ros-kinetic-gazebo-ros
+#ROS#
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+sudo apt-get update  -y
+sudo apt-get install ros-kinetic-desktop-full  -y
+sudo rosdep init
+sudo rosdep fix-permissions
+rosdep update
+echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+sudo apt-get install python-rosinstall -y
+printenv | grep ROS
+echo "export ROS_MASTER_URI=http://IP_OF_REMOTE_PC" >> ~/.bashrc
+echo "export ROS_HOSTNAME=IP_OF_REMOTE_PC" >> ~/.bashrc
 
+#Gazebo8#
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get remove '.*gazebo.*' '.*sdformat.*' '.*ignition-math.*' '.*ignition-msgs.*' '.*ignition-transport.*'
+sudo apt-get install ros-kinetic-desktop-full -y
+sudo apt-get install libignition-math3 -y
+sudo apt-get install libignition-math3-dev -y
+sudo apt-get install libsdformat5 -y
+sudo apt-get install libsdformat5-dev -y
+sudo apt-get install libgazebo8 -y
+sudo apt-get install libgazebo8-dev -y
+sudo apt-get install gazebo8 -y
+sudo apt-get install gazebo8-plugin-base -y
+sudo apt-get install ros-kinetic-gazebo8-ros -y
+sudo apt-get install ros-kinetic-gazebo8-ros-control -y
+sudo apt-get install ros-kinetic-gazebo8-plugins -y
 
 #MLCS_sim#
 sudo apt-get install ros-kinetic-joint-state-controller -y
 sudo apt-get install ros-kinetic-joint-state-publisher -y
 sudo apt-get install ros-kinetic-robot-state-publisher -y
+sudo apt-get install ros-kinetic-controller-manager -y
 sudo apt-get install ros-kinetic-controller-interface -y
-sudo apt-get install ros-kinetic-roslint
+sudo apt-get install ros-kinetic-roslint -y
 sudo apt-get install ros-kinetic-control-toolbox -y
 sudo apt-get install ros-kinetic-twist-mux -y
 sudo apt-get install ros-kinetic-pr2-description -y
@@ -51,37 +67,36 @@ pip install gym
 pip install rospkg catkin_pkg
 
 
+#Alias#
+echo "alias yb='roslaunch bringup robot.launch'" >> ~/.bashrc
+echo "alias key='roslaunch teleop teleop_keyboard.launch'" >> ~/.bashrc
+echo "alias kg='killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient rviz'" >> ~/.bashrc
+
 #Installation
 pip install -e .
 cd installation
 if [ -z "$ROS_DISTRO" ]; then
-  echo "ROS not installed. Check the installation steps: https://github.com/erlerobot/gym#installing-the-gazebo-environment"
+  echo "ROS not installed."
 fi
 
 program="gazebo"
 condition=$(which $program 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ] ; then
-    echo "Gazebo is not installed. Check the installation steps: https://github.com/erlerobot/gym#installing-the-gazebo-environment"
+    echo "Gazebo is not installed."
 fi
 
 source /opt/ros/kinetic/setup.bash
 
-ws="catkin_ws"
-if [ -d $ws ]; then
-  echo "Error: catkin_ws directory already exists" 1>&2
+if [ -z "$GYM_GAZEBO_WORLD" ]; then
+  bash -c 'echo "export GYM_GAZEBO_WORLD="`pwd`/../world/test.world >> ~/.bashrc'
+  exec bash
 fi
-src=$ws"/src"
-mkdir -p $src
-cd $src
-catkin_init_workspace
-git clone https://github.com/MLCS-Yonsei/mlcs_sim.git
-rm -rf mlcs_sim/.git
-cd ..
-catkin_make
-source devel/setup.bash
-catkin_make -j 1
-bash -c 'echo source `pwd`/devel/setup.bash >> ~/.bashrc'
-echo "## ROS workspace compiled ##"
+if [ -z "$GAZEBO_MODEL_PATH" ]; then
+  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../models >> ~/.bashrc'
+  exec bash
+fi
+source ~/.bashrc
+echo "## Installation complete!! ##"
 
 
 
