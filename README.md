@@ -4,12 +4,6 @@ Youbot Reinforcement Learning in Factory environment (SLAM &amp; Navi)
 This work uses **gym-gazebo**.
 Visit [erlerobotics/gym-gazebo](https://github.com/erlerobot/gym-gazebo) for more information and videos.
 
-## Installation
-One-line install script available.
-```bash
-cd Factory_RL_Gazebo
-sh setup.sh
-```
 ## Dependency package
 ```bash
 cd catkin_ws/src
@@ -18,12 +12,21 @@ cd ..
 catkin_make
 ```
 
+## Installation
+One-line install script available.
+```bash
+cd
+git clone https://github.com/MLCS-Yonsei/Factory_RL_Gazebo
+cd Factory_RL_Gazebo
+sh setup.sh
+```
+
 ## Usage
 
 ### Running an environment
 
 ```bash
-cd Factory_RL_Gazebo/example
+cd example
 python main.py
 ```
 
