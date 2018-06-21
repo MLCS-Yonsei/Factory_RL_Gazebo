@@ -10,6 +10,7 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
 
 from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Range 
 
 from gym.utils import seeding
 
@@ -28,21 +29,30 @@ class testEnv(gazebo_env.GazeboEnv):
 
         self._seed()
 
-    def discretize_observation(self,data,new_ranges):
+    def discretize_observation(self,lidar,new_ranges,sonar_front,sonar_rear,sonar_left,sonar_right):
         discretized_ranges = []
         min_range = 0.45
+        min_sonar_range = 0.3
         done = False
-        mod = len(data.ranges)/new_ranges
-        for i, item in enumerate(data.ranges):
+        mod = len(lidar.ranges)/new_ranges
+        for i, item in enumerate(lidar.ranges):
             if (i%mod==0):
-                if data.ranges[i] == float ('Inf') or np.isinf(data.ranges[i]):
+                if lidar.ranges[i] == float ('Inf') or np.isinf(lidar.ranges[i]):
                     discretized_ranges.append(6)
-                elif np.isnan(data.ranges[i]):
+                elif np.isnan(lidar.ranges[i]):
                     discretized_ranges.append(0)
                 else:
-                    discretized_ranges.append(int(data.ranges[i]))
-            if (min_range > data.ranges[i] > 0):
+                    discretized_ranges.append(int(lidar.ranges[i]))
+            if (min_range > lidar.ranges[i] > 0):
                 done = True
+            if (min_sonar_range > sonar_front.range > 0):
+                done = True
+            if (min_sonar_range > sonar_rear.range > 0):
+                done = True
+            if (min_sonar_range > sonar_left.range > 0):
+                done = True
+            if (min_sonar_range > sonar_right.range > 0):
+                done = True            
         return discretized_ranges,done
 
     def _seed(self, seed=None):
@@ -94,10 +104,15 @@ class testEnv(gazebo_env.GazeboEnv):
             vel_cmd.angular.z = -0.1
             self.vel_pub.publish(vel_cmd)
 
-        data = None
-        while data is None:
+        lidar = None
+        while lidar is None:
             try:
-                data = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
+                sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
+                sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
+                sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+
             except:
                 pass
 
@@ -108,7 +123,7 @@ class testEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
 
-        state,done = self.discretize_observation(data,5)
+        state,done = self.discretize_observation(lidar,5,sonar_front,sonar_rear,sonar_left,sonar_right)
 
         if not done:
             if action == 0:
@@ -125,7 +140,7 @@ class testEnv(gazebo_env.GazeboEnv):
         # Resets the state of the environment and returns an initial observation.
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
-            #reset_proxy.call()
+            #reset_proxy.call()reset_proxy.call()
             self.reset_proxy()
         except (rospy.ServiceException) as e:
             print ("/gazebo/reset_simulation service call failed")
@@ -138,14 +153,18 @@ class testEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        #read laser data
-        data = None
-        while data is None:
+        #read lidar data
+        lidar = None
+        while lidar is None:
             try:
-                data = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
+                sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
+                sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
+                sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
             except:
                 pass
-
+    
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
             #resp_pause = pause.call()
@@ -153,6 +172,6 @@ class testEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
 
-        state = self.discretize_observation(data,5)
+        state = self.discretize_observation(lidar,5,sonar_front,sonar_rear,sonar_left,sonar_right)
 
         return state
