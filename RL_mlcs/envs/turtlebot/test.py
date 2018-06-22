@@ -115,6 +115,8 @@ class testEnv(gazebo_env.GazeboEnv):
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
                 rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
                 depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
+                rgb_i = np.fromstring(rgb.data, np.uint8)
+                depth_i = np.fromstring(depth.data, np.uint8)
             except:
                 pass
 
@@ -166,6 +168,8 @@ class testEnv(gazebo_env.GazeboEnv):
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
                 rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
                 depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
+                rgb_i = np.fromstring(rgb.data, np.uint8)
+                depth_i = np.fromstring(depth.data, np.uint8)
             except:
                 pass
     
