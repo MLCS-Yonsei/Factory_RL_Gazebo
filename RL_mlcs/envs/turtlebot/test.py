@@ -10,7 +10,8 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
 
 from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Range 
+from sensor_msgs.msg import Range
+from sensor_msgs.msg import Image 
 
 from gym.utils import seeding
 
@@ -112,7 +113,8 @@ class testEnv(gazebo_env.GazeboEnv):
                 sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
                 sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
-
+                rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
+                depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
 
@@ -162,6 +164,8 @@ class testEnv(gazebo_env.GazeboEnv):
                 sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
                 sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+                rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
+                depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
     
