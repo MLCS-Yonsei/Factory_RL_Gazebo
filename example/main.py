@@ -4,8 +4,9 @@ import RL_mlcs
 import time
 import numpy
 import random
-import time
+import math
 
+from env_reset import env_reset
 from module import qlearn
 from module import liveplot
 
@@ -22,7 +23,10 @@ def render():
 if __name__ == '__main__':
 
     env = gym.make('test-v0')
-    # obstacle_warmup()
+
+    # gazebo warming up()
+    env_reset().gazebo_warmup()
+    
     outdir = '/tmp/gazebo_gym_experiments'
     env = gym.wrappers.Monitor(env, outdir, force=True)
     plotter = liveplot.LivePlot(outdir)
@@ -42,7 +46,10 @@ if __name__ == '__main__':
 
     for x in range(total_episodes):
         done = False
+
         # rand_deploy()
+        env_reset().rand_deploy()
+
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
         observation = env.reset()
@@ -79,12 +86,19 @@ if __name__ == '__main__':
                 break
 
         # rand_remove()
+        env_reset().rand_remove()
+
         if x%100==0:
             plotter.plot(env)
 
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
         print ("EP: "+str(x+1)+" - [alpha: "+str(round(qlearn.alpha,2))+" - gamma: "+str(round(qlearn.gamma,2))+" - epsilon: "+str(round(qlearn.epsilon,2))+"] - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
+
+
+    # remained gazebo model clear
+    env_reset().remainder_clear()
+
 
     #Github table content
     print ("\n|"+str(total_episodes)+"|"+str(qlearn.alpha)+"|"+str(qlearn.gamma)+"|"+str(initial_epsilon)+"*"+str(epsilon_discount)+"|"+str(highest_reward)+"| PICTURE |")

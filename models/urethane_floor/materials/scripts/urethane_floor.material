@@ -1,0 +1,17 @@
+material vrc/urethane_floor
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture urethane_floor.png
+				filtering anistropic
+				max_anisotropy 0
+				scale 1 1
+			}
+		}
+	}
+}

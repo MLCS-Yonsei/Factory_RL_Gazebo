@@ -1,0 +1,17 @@
+material vrc/concrete_wall
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture concrete_wall.png
+				filtering anistropic
+				max_anisotropy 16
+				scale 1 1
+			}
+		}
+	}
+}

@@ -1,0 +1,110 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="oldbrick_wall">
+    <static>true</static>
+    <link name="link1">
+      <pose>12.5 0 1.4 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://oldbrick_wall/materials/scripts</uri>
+            <uri>model://oldbrick_wall/materials/textures</uri>
+            <name>vrc/oldbrick_wall</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+    
+    <link name="link6">
+      <pose>12.5 25 1.4 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://oldbrick_wall/materials/scripts</uri>
+            <uri>model://oldbrick_wall/materials/textures</uri>
+            <name>vrc/oldbrick_wall</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+    
+    <link name="link11">
+      <pose>0 12.5 1.4 0 0 1.57</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://oldbrick_wall/materials/scripts</uri>
+            <uri>model://oldbrick_wall/materials/textures</uri>
+            <name>vrc/oldbrick_wall</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+    
+    <link name="link16">
+      <pose>25 12.5 1.4 0 0 1.57</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>25 0.2 2.8</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://oldbrick_wall/materials/scripts</uri>
+            <uri>model://oldbrick_wall/materials/textures</uri>
+            <name>vrc/oldbrick_wall</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+
+  </model>
+</sdf>

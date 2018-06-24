@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="lightgrey_floor">
+    <static>true</static>
+    <link name="link1">
+      <pose>12.5 12.5 0.1 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>25 25 0.2</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <box>
+            <size>25 25 0.2</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://lightgrey_floor/materials/scripts</uri>
+            <uri>model://lightgrey_floor/materials/textures</uri>
+            <name>vrc/lightgrey_floor</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>
+
