@@ -1,6 +1,0 @@
-README.md
-RL_mlcs.egg-info/PKG-INFO
-RL_mlcs.egg-info/SOURCES.txt
-RL_mlcs.egg-info/dependency_links.txt
-RL_mlcs.egg-info/requires.txt
-RL_mlcs.egg-info/top_level.txt
