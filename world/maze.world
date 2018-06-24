@@ -67,7 +67,7 @@
       <shadows>0</shadows>
     </scene>
     <physics type='ode'>
-      <max_step_size>0.005</max_step_size>
+      <max_step_size>0.01</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>0</real_time_update_rate>
       <gravity>0 0 -9.8</gravity>
@@ -83,9 +83,9 @@
         <view_controller>orbit</view_controller>
       </camera>
     </gui>
-    <!-- A simple circuit -->
+    <!-- A simple maze -->
     <include>
-      <uri>model://env_world/Test_ql_1</uri>
+      <uri>model://env_world/Maze_ql_1</uri>
       <pose>2.4 -2.1 0 0 0 0</pose>
     </include>
   </world>

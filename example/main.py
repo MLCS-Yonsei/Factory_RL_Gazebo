@@ -24,7 +24,6 @@ if __name__ == '__main__':
 
     env = gym.make('test-v0')
 
-    # gazebo warming up()
     env_reset().gazebo_warmup()
     
     outdir = '/tmp/gazebo_gym_experiments'
@@ -47,13 +46,12 @@ if __name__ == '__main__':
     for x in range(total_episodes):
         done = False
 
-        # rand_deploy()
-        env_reset().rand_deploy()
-
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
         observation = env.reset()
 
+        env_reset().rand_deploy()
+        
         if qlearn.epsilon > 0.05:
             qlearn.epsilon *= epsilon_discount
 
@@ -84,20 +82,13 @@ if __name__ == '__main__':
             else:
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
-
-        # rand_remove()
-        env_reset().rand_remove()
-
+        
         if x%100==0:
             plotter.plot(env)
 
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
         print ("EP: "+str(x+1)+" - [alpha: "+str(round(qlearn.alpha,2))+" - gamma: "+str(round(qlearn.gamma,2))+" - epsilon: "+str(round(qlearn.epsilon,2))+"] - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
-
-
-    # remained gazebo model clear
-    env_reset().remainder_clear()
 
 
     #Github table content

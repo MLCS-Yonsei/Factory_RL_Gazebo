@@ -3,6 +3,11 @@
   <arg name="paused" value="true"/>
   <arg name="gui" default="true"/>
   <arg name="headless" value="true"/>
+  <arg name="x" default="0"/>
+  <arg name="y" default="0"/>
+  <arg name="init_pos_x" default="0.0"/>
+  <arg name="init_pos_y" default="0.0"/>
+  <arg name="init_pos_z" default="0.2"/>
 
   <!-- Gazebo world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -17,8 +22,14 @@
 
   <!-- Gazebo model spawner -->
   <node name="youbot_model" pkg="gazebo_ros" type="spawn_model"
-        args="$(optenv ROBOT_INITIAL_POSE) -unpause -urdf -param robot_description -model mobile_base"/>
-
+        args="-param robot_description
+          -urdf
+          -x $(arg init_pos_x)
+          -y $(arg init_pos_y)
+          -z $(arg init_pos_z)
+          -model youbot">
+  </node>
+  
   <!-- Scan unifier -->
   <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
   	<rosparam param="input_scans">["scan_front","scan_rear"]</rosparam>
@@ -43,6 +54,11 @@
   
   <!-- State publisher -->
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
+  <!-- launch joint state controller -->
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
   </node>
 
