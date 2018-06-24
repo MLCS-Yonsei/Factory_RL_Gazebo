@@ -7,3 +7,8 @@ register(
     id='test-v0',
     entry_point='RL_mlcs.envs.turtlebot:testEnv',
 )
+
+register(
+    id='factory-v0',
+    entry_point='RL_mlcs.envs.turtlebot:factoryEnv',
+)

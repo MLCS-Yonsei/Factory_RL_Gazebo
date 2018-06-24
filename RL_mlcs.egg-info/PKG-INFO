@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: RL-mlcs
+Version: 0.0.2
+Summary: reinforcement learning agents using Gazebo and ROS.
+Home-page: https://github.com/MLCS-Yonsei/Factory_RL_Gazebo
+Author: Seungchul ha
+Author-email: UNKNOWN
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN

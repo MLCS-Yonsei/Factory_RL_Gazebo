@@ -70,39 +70,39 @@ class testEnv(gazebo_env.GazeboEnv):
 
         if action == 0: #FORWARD
             vel_cmd = Twist()
-            vel_cmd.linear.x = 0.1
+            vel_cmd.linear.x = 0.3
             vel_cmd.linear.y = 0.0
             vel_cmd.angular.z = 0.0
             self.vel_pub.publish(vel_cmd)
         elif action == 1: #BACKWARD
             vel_cmd = Twist()
-            vel_cmd.linear.x = 0.1
+            vel_cmd.linear.x = 0.3
             vel_cmd.linear.y = 0.0
             vel_cmd.angular.z = 0.0
             self.vel_pub.publish(vel_cmd)    
         elif action == 2: #LEFT
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
-            vel_cmd.linear.y = 0.1
+            vel_cmd.linear.y = 0.3
             vel_cmd.angular.z = 0.0
             self.vel_pub.publish(vel_cmd)
         elif action == 3: #RIGHT
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
-            vel_cmd.linear.y = -0.1
+            vel_cmd.linear.y = -0.3
             vel_cmd.angular.z = 0.0
             self.vel_pub.publish(vel_cmd)
         elif action == 4: #LEFT_FORWARD
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
             vel_cmd.linear.y = 0.0
-            vel_cmd.angular.z = 0.1
+            vel_cmd.angular.z = 0.3
             self.vel_pub.publish(vel_cmd)
         elif action == 5: #RIGHT_FORWARD
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
             vel_cmd.linear.y = 0.0
-            vel_cmd.angular.z = -0.1
+            vel_cmd.angular.z = -0.3
             self.vel_pub.publish(vel_cmd)
 
         lidar = None

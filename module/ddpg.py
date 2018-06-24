@@ -11,8 +11,8 @@ class DDPG:
         self.epsilon=0.4
         self.state_dim=config.state_dim
         self.action_dim=config.action_dim
-        self.lidar_dim=config.lidar_dim
-        self.lidar_dim[0]=-1
+        self.range_dim=config.range_dim
+        self.range_dim[0]=-1
         self.sonar_dim=config.sonar_dim
         self.sonar_dim[0]=-1
         self.rgb_dim=config.rgb_dim
@@ -84,11 +84,11 @@ class DDPG:
         return action
 
     def learn(self, batch):
-        lidar0=np.reshape(batch['lidar0'],self.lidar_dim)
+        lidar0=np.reshape(batch['lidar0'],self.range_dim)
         sonar0=np.reshape(batch['sonar0'],self.sonar_dim)
         rgb0=np.reshape(batch['rgb0'],self.rgb_dim)
         depth0=np.reshape(batch['depth0'],self.depth_dim)
-        lidar1=np.reshape(batch['lidar1'],self.lidar_dim)
+        lidar1=np.reshape(batch['lidar1'],self.range_dim)
         sonar1=np.reshape(batch['sonar1'],self.sonar_dim)
         rgb1=np.reshape(batch['rgb1'],self.rgb_dim)
         depth1=np.reshape(batch['depth1'],self.depth_dim)
@@ -143,7 +143,7 @@ class Build_network(object):
         layers=config.layers
         self.trainable=False if name.split('_')[1]=='target' else True
         with tf.name_scope(name):
-            self.state_lidar=tf.placeholder(tf.float32,config.lidar_dim)
+            self.state_lidar=tf.placeholder(tf.float32,config.range_dim)
             self.state_sonar=tf.placeholder(tf.float32,config.sonar_dim)
             self.state_rgb=tf.placeholder(tf.float32,config.rgb_dim)
             self.state_depth=tf.placeholder(tf.float32,config.depth_dim)

@@ -1,4 +1,5 @@
 import gym
+import time
 import rospy
 import roslaunch
 import time
@@ -11,9 +12,13 @@ from std_srvs.srv import Empty
 
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Range
-from sensor_msgs.msg import Image 
+from sensor_msgs.msg import Image
+from nav_msgs.msg import Odometry
 
+from rosgraph_msgs.msg import Clock
+import tf
 from gym.utils import seeding
+from gym.spaces import Box, Discrete
 
 class factoryEnv(gazebo_env.GazeboEnv):
 
@@ -24,37 +29,67 @@ class factoryEnv(gazebo_env.GazeboEnv):
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-
+        self.reward_range = (-np.inf, np.inf)
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
-
+        self.rho_0 = 2.0
         self._seed()
+        self.min_scan_range = 0.4
+        self.min_sonar_range = 0.3
+        self.min_dist_range = 0.1
+        self.odom_data_tmp = [0,0,0,0,0,0]
+        self.action_space = spaces.Box(low=np.array([0.0,-1.0]),high=np.array([0.5,1.0]))
 
-    def wrap_observation(self,lidar,new_ranges,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth):
-        ranges = []
-        sonars = []
-        min_range = 0.45
-        min_sonar_range = 0.3
+    def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data):
+        scan_data=[]
+        sonar_data = []
         done = False
-        mod = len(lidar.ranges)/new_ranges
-        for i, item in enumerate(lidar.ranges):
-            if (i%mod==0):
-                if item == float ('Inf') or np.isinf(item):
-                    ranges.append(6.0)
-                elif np.isnan(item):
-                    ranges.append(0.0)
-                else:
-                    ranges.append(item)
-            if (min_range > item > 0):
-                done = True
+        #Scan normalize by dividing by 10
+        for i, item in enumerate(scan.ranges):
+            if i % 10 == 0:
+                scan_data.append(min(scan.ranges[i:i+9])/10.0)
+            if (self.min_scan_range > item > 0):
+                done = True        
+        #Sonar unifier
         for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
-            sonars.append(item.range)
-            if (min_sonar_range > item.range > 0):
-                done = True
+            sonar_data.append(item.range)
+            if (self.min_sonar_range > item.range > 0):
+                done = True                
+        #RGB reshape        
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[480,640,3])
-        depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])
-        return ranges,sonars,rgb,depth,done
+        depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])        
+        #Relative distance & angle
+        dist_to_target = ((self.target_x - pos_data[0])**2 + (self.target_y - pos_data[1])**2)**0.5
+        angle_to_target = np.arctan2((self.target_y - pos_data[1]),(self.target_x - pos_data[0])) - pos_data[2]
+        if angle_to_target > np.pi:
+            angle_to_target -= 2 * np.pi
+        if angle_to_target < -np.pi:
+            angle_to_target += 2 * np.pi
+        #State = [laser_scan_0 ~ laser_scan_9, sonar_front ~ sonar_ right, v_x_t-1, v_y_t-1, v_z_t-1, angle_to_target, distance_to_target, rgb, depth]
+        state = scan_data
+        state.append(sonar_data)
+        state.append(self.vel_x_prev)
+        state.append(self.vel_y_prev)
+        state.append(self.vel_z_prev)
+        state.append(angle_to_target/np.pi) # Normalize by dividing by pi
+        state.append(dist_to_target/10.0)     # Normalize by dividing by 10
+        state.append(rgb)
+        state.append(depth)
+        if (self.min_dist_range > dist_to_target):
+            done = True
+        return state,done
 
+
+    def odom_to_data(self, odom):
+        odom_data = []
+        odom_data.append(odom.position.x)	# [0]
+        odom_data.append(odom.position.y)	# [1]
+        odom_data.append(odom.position.z)	# [2]
+        [roll, pitch, yaw] = tf.transformations.euler_from_quaternion([odom.orientation.x, odom.orientation.y, odom.orientation.z, odom.orientation.w])
+        odom_data.append(roll)			# [3]
+        odom_data.append(pitch)			# [4]
+        odom_data.append(yaw)			# [5]
+        
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -67,46 +102,96 @@ class factoryEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
+        vel_x = action[0]
+        vel_y = action[1]
+        vel_z = action[2]
         vel_cmd = Twist()
-        vel_cmd.linear.x = action[0]
-        vel_cmd.linear.y = action[1]
-        vel_cmd.angular.z = action[2]
+        vel_cmd.linear.x = vel_x
+        vel_cmd.linear.y = vel_y
+        vel_cmd.angular.z = vel_z
         self.vel_pub.publish(vel_cmd)
         
-        lidar = None
-        while lidar is None:
+        time = None
+        while time is None:
             try:
-                lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                time = rospy.wait_for_message('/clock', Clock, timeout=5).clock
+            except:
+                pass
+        
+        odom = None
+        while odom is None:
+            try:
+                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+            except:
+                pass
+
+        scan = None
+        while scan is None:
+            try:
+                scan = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+            except:
+                pass
+
+        sonar_front = None
+        while sonar_front is None:
+            try:
                 sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
                 sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
                 sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+            except:
+                pass
+
+        rgb = None
+        while rgb is None:
+            try:
                 rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
+            except:
+                pass
+
+        depth = None
+        while depth is None:
+            try:
                 depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
 
+        odom_data = self.odom_to_data(odom)
+        odom_data_tmp = odom_data
+        timestamp = time.secs+time.nsecs/1e+9
+        position_x = np.cos(self.odom_data_tmp[5]) * (odom_data[0] - self.odom_data_tmp[0]) + np.sin(self.odom_data_tmp[5]) * (odom_data[1] - self.odom_data_tmp[1])
+        position_y = -np.sin(self.odom_data_tmp[5]) * (odom_data[0] - self.odom_data_tmp[0]) + np.cos(self.odom_data_tmp[5]) * (odom_data[1] - self.odom_data_tmp[1])
+        orientation_yaw = odom_data[5] - self.odom_data_tmp[5]
+        if orientation_yaw > np.pi:
+            orientation_yaw -= 2 * np.pi
+        if orientation_yaw < -np.pi:
+            orientation_yaw += 2 * np.pi
+        pos_data = [position_x,position_y,orientation_yaw]
+        state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
+
+        self.vel_x_prev = vel_x
+        self.vel_y_prev = vel_y
+        self.vel_z_prev = vel_z
+
+        rho = min(state[0:9]) * 10
+        if rho < self.rho_0:
+            featured_scan_data = min((1/rho - 1/self.rho_0)**2, 1.0*(10**30))
+        else:
+            featured_scan_data = 0
+        distance_decrease = (self.state_prev[-1] - state[-1]) * 10.0
+        reward = 50 * distance_decrease - featured_scan_data
+        if done:
+            self.odom_data_tmp = odom_data_tmp
+        self.state_prev = state
+        return np.asarray(state), distance_decrease, done, pos_data, timestamp, {}
+
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
-            #resp_pause = pause.call()
             self.pause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
 
-        ranges,sonars,rgb,depth,done = self.wrap_observation(lidar,5,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth)
-
-        if not done:
-            if action == 0:
-                reward = 5
-            else:
-                reward = 1
-        else:
-            reward = -200
-
-        return ranges,sonars,rgb,depth,reward,done,{}
-
     def _reset(self):
-
         # Resets the state of the environment and returns an initial observation.
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
@@ -122,28 +207,79 @@ class factoryEnv(gazebo_env.GazeboEnv):
             self.unpause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
-
-        #read lidar data
-        lidar = None
-        while lidar is None:
+        target_set = [[-5,-4],[-5,0],[-5,1],[-5,2],[-5,3],[-5,4],\
+                     [-4,-4],[-4,0],[-4,1],[-4,4],\
+                     [-3,-4],[-3,-3],[-3,-2],[-3,0],[-3,1],[-3,4],\
+                     [-2,1],[-2,2],[-2,3],[-2,4],\
+                     [-1,-2],[-1,-1],[-1,1],[-1,4],\
+                     [0,-4],[0,-3],[0,-2],[0,-1],[0,1],\
+                     [1,-4],[1,-2],[1,-1],[1,0],[1,1],[1,2],[1,3],[1,4],\
+                     [2,-4],[2,-1],[2,0],[2,1],[2,3],[2,4],\
+                     [3,-4],[3,-3],[3,-2],[3,-1],[3,0],[3,1],[3,3],[3,4],\
+                     [4,-4],[4,-3],[4,-2],[4,-1],[4,0],[4,1],[4,2],[4,3],[4,4]]
+        #read scan data
+        self.target = [3.5,-3.5]
+        self.target_x = self.target[0]
+        self.target_y = self.target[1]
+        
+        odom = None
+        while odom is None:
             try:
-                lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+            except:
+                pass
+
+        scan = None
+        while scan is None:
+            try:
+                scan = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+            except:
+                pass
+
+        sonar_front = None
+        while sonar_front is None:
+            try:
                 sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
                 sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
                 sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
                 sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+            except:
+                pass
+
+        rgb = None
+        while rgb is None:
+            try:
                 rgb =  rospy.wait_for_message('/camera/rgb/image_raw', Image, timeout=5)
+            except:
+                pass
+
+        depth = None
+        while depth is None:
+            try:
                 depth =  rospy.wait_for_message('/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
-    
+        
+        odom_data = self.odom_to_data(odom)
+        self.odom_data_tmp = odom_data
+        position_x = np.cos(self.odom_data_tmp[5]) * (odom_data[0] - self.odom_data_tmp[0]) + np.sin(self.odom_data_tmp[5]) * (odom_data[1] - self.odom_data_tmp[1])
+        position_y = -np.sin(self.odom_data_tmp[5]) * (odom_data[0] - self.odom_data_tmp[0]) + np.cos(self.odom_data_tmp[5]) * (odom_data[1] - self.odom_data_tmp[1])
+        orientation_yaw = odom_data[5] - self.odom_data_tmp[5]
+        if orientation_yaw > np.pi:
+            orientation_yaw -= 2 * np.pi
+        if orientation_yaw < -np.pi:
+            orientation_yaw += 2 * np.pi
+        pos_data = [position_x, position_y, orientation_yaw]
+        self.ang_vel_prev = 0
+        self.lin_vel_prev = 0
+        state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
+
+        self.state_prev = state
+        return np.asarray(state)
+
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
             #resp_pause = pause.call()
             self.pause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
-
-        ranges,sonars,rgb,depth,done = self.wrap_observation(lidar,5,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth)
-
-        return ranges,sonars,rgb,depth

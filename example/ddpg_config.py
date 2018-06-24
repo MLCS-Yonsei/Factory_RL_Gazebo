@@ -5,6 +5,7 @@ class Settings(object):
 
     def default(self):
         self.gpu=True
+        self.state_dim=2150419
         self.range_dim=[None,10]
         self.sonar_dim=[None,4]
         self.rgb_dim=[None,480,640,3]
