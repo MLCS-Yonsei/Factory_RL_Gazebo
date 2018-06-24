@@ -15,7 +15,7 @@
         <cast_shadows>false</cast_shadows>
         <geometry>
           <mesh>
-            <uri>/home/jinhojeong/Desktop/factory_reset/models/lathe/lathe.dae</uri>
+            <uri>/models/lathe/lathe.dae</uri>
           </mesh>
         </geometry>
       </visual>
