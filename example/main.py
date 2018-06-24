@@ -22,7 +22,7 @@ def render():
 if __name__ == '__main__':
 
     env = gym.make('test-v0')
-
+    # obstacle_warmup()
     outdir = '/tmp/gazebo_gym_experiments'
     env = gym.wrappers.Monitor(env, outdir, force=True)
     plotter = liveplot.LivePlot(outdir)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     for x in range(total_episodes):
         done = False
-
+        # rand_deploy()
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
         observation = env.reset()
@@ -78,6 +78,7 @@ if __name__ == '__main__':
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
 
+        # rand_remove()
         if x%100==0:
             plotter.plot(env)
 
