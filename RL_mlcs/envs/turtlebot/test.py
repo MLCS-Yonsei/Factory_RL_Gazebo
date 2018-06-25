@@ -105,8 +105,8 @@ class testEnv(gazebo_env.GazeboEnv):
             vel_cmd.angular.z = -0.3
             self.vel_pub.publish(vel_cmd)
 
-        lidar = None
-        while lidar is None:
+        sonar_front = None
+        while sonar_front is None:
             try:
                 lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
                 sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
@@ -158,8 +158,8 @@ class testEnv(gazebo_env.GazeboEnv):
             print ("/gazebo/unpause_physics service call failed")
 
         #read lidar data
-        lidar = None
-        while lidar is None:
+        sonar_front = None
+        while sonar_front is None:
             try:
                 lidar = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
                 sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
