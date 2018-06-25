@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     outdir = '/tmp/gazebo_gym_experiments'
     env = gym.wrappers.Monitor(env, outdir, force=True)
-    env.action_space=3
+    env.action_space = 3
     plotter = liveplot.LivePlot(outdir)
 
     last_time_steps = numpy.ndarray(0)
@@ -43,7 +43,6 @@ if __name__ == '__main__':
     epsilon_discount = 0.9986
 
     start_time = time.time()
-    total_episodes = 10000
     highest_reward = 0
 
     for x in range(int(config.max_episode)):
@@ -51,7 +50,10 @@ if __name__ == '__main__':
 
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
-        state0 = env.reset()
+        env_reset().rand_deploy()
+
+        # state0 = env.reset()
+        state0,reward,done,info = env.step([0.0, 0.0, 0.0])
 
         if ddpg.epsilon > 0.05:
             ddpg.epsilon *= epsilon_discount
@@ -104,7 +106,7 @@ if __name__ == '__main__':
         print ("EP: "+str(x+1)+" - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
 
     #Github table content
-    print ("\n|"+str(total_episodes)+"|"+str(highest_reward)+"| PICTURE |")
+    print ("\n|"+str(int(config.max_episode))+"|"+str(highest_reward)+"| PICTURE |")
 
     l = last_time_steps.tolist()
     l.sort()

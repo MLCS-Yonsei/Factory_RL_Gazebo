@@ -75,7 +75,7 @@ class DDPG:
         action=self.a_scale* \
                np.tanh(action+self.epsilon*np.random.randn(1,self.action_dim))+ \
                self.a_mean
-        return action
+        return np.reshape(action,[self.action_dim])
 
     def learn(self,batch):
         vector0=np.reshape(batch['vector0'],self.vector_dim)
