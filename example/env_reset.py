@@ -28,7 +28,7 @@ class env_reset(object):
         self.x_rand_coord_list = np.random.choice(env_config.x_coord_list,self.lathe_num+self.systec_num,replace=True)
         self.y_rand_coord_list = np.random.choice(env_config.y_coord_list,self.lathe_num+self.systec_num,replace=True)
     
-    def rand_deploy(self):
+    def rand_deploy(self,pos_data):
         np.random.seed(int(math.floor(time.time())))
         subprocess.call('rosservice call gazebo/reset_simulation',shell=True)
         
@@ -37,10 +37,16 @@ class env_reset(object):
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: wall'+ '%d' %(self.wall_index+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(-12.5, -12.5), shell=True)
         
         for i in range(0,self.lathe_num):
-            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: lathe'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.x_rand_coord_list[i], self.y_rand_coord_list[i]), shell=True)
+            if self.x_rand_coord_list[i]==pos_data[0] and self.y_rand_coord_list[i]==pos_data[1]:
+                pass
+            else:
+                subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: lathe'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.x_rand_coord_list[i], self.y_rand_coord_list[i]), shell=True)
         
         for i in range(0,self.systec_num):
-            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: systec'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 1.57, w: 1.57 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.x_rand_coord_list[i+5], self.y_rand_coord_list[i+5]), shell=True)
+            if self.x_rand_coord_list[i]==pos_data[0] and self.y_rand_coord_list[i]==pos_data[1]:
+                pass
+            else:
+                subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: systec'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 1.57, w: 1.57 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.x_rand_coord_list[i+5], self.y_rand_coord_list[i+5]), shell=True)
 
         print('-'*50 +'\n Randomized environment model set done.')
 
