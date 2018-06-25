@@ -6,6 +6,7 @@ import numpy
 import random
 import time
 
+from env_reset import env_reset
 from module import ddpg, replay, liveplot
 
 from ddpg_config import config
@@ -23,6 +24,8 @@ def render():
 if __name__ == '__main__':
 
     env = gym.make('factory-v0')
+
+    env_reset().gazebo_warmup()
 
     outdir = '/tmp/gazebo_gym_experiments'
     env = gym.wrappers.Monitor(env, outdir, force=True)
