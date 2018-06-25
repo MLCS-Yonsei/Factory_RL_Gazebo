@@ -178,7 +178,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         if done:
             self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
-        return state, reward, done, {}
+        return state, reward, done, pos_data, {}
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
