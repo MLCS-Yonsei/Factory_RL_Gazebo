@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import copy
 
 class DDPG:
     def __init__(self, config):
@@ -9,15 +10,14 @@ class DDPG:
         else:
             sess_config=None
         self.epsilon=0.4
-        self.state_dim=config.state_dim
         self.action_dim=config.action_dim
-        self.range_dim=config.range_dim
+        self.range_dim=copy.copy(config.range_dim)
         self.range_dim[0]=-1
-        self.sonar_dim=config.sonar_dim
+        self.sonar_dim=copy.copy(config.sonar_dim)
         self.sonar_dim[0]=-1
-        self.rgb_dim=config.rgb_dim
+        self.rgb_dim=copy.copy(config.rgb_dim)
         self.rgb_dim[0]=-1
-        self.depth_dim=config.depth_dim
+        self.depth_dim=copy.copy(config.depth_dim)
         self.depth_dim[0]=-1
         self.gamma=tf.constant(config.gamma,dtype=tf.float32,name='gamma')
         self.sess=tf.Session(config=sess_config)
