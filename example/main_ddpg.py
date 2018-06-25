@@ -43,7 +43,7 @@ if __name__ == '__main__':
     total_episodes = 10000
     highest_reward = 0
 
-    for x in range(config.max_episode):
+    for x in range(int(config.max_episode)):
         done = False
 
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
         #state = ''.join(map(str, observation))
 
-        for i in range(config.max_step):
+        for i in range(int(config.max_step)):
 
             # Pick an action based on the current state
             action = ddpg.chooseAction(state0)
