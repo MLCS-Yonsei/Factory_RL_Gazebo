@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
-        ranges0,sonars0,rgb0,depth0 = env.reset()
+        state0 = env.reset()
 
         if ddpg.epsilon > 0.05:
             ddpg.epsilon *= epsilon_discount
@@ -60,24 +60,20 @@ if __name__ == '__main__':
         for i in range(config.max_step):
 
             # Pick an action based on the current state
-            action = ddpg.chooseAction(ranges0,sonars0,rgb0,depth0)
+            action = ddpg.chooseAction(state0)
 
             # Execute the action and get feedback
-            ranges1,sonars1,rgb1,depth1,reward,done,info = env.step(action)
-            
-            memory.add({
-                'lidar0':ranges0,
-                'sonar0':sonars0,
-                'rgb0':rgb0,
-                'depth0':depth0,
-                'lidar1':ranges1,
-                'sonar1':sonars1,
-                'rgb1':rgb1,
-                'depth1':depth1,
+            state1,reward,done,info = env.step(action)
+            experience={
+                'vector0':state0['vector'],
+                'rgbd0':state0['rgbd'],
+                'vector1':state1['vector'],
+                'rgbd1':state0['rgbd'],
                 'action0':action,
                 'reward':reward,
                 'done':done
-            })
+            }
+            memory.add(experience)
 
             cumulated_reward += reward
 
@@ -87,21 +83,12 @@ if __name__ == '__main__':
             #nextState = ''.join(map(str, observation))
 
             batch=memory.batch()
-            ddpg.learn( \
-                batch['lidar0'], \
-                batch['sonar0'], \
-                batch['rgb0'], \
-                batch['depth0'], \
-                batch['lidar1'], \
-                batch['sonar1'], \
-                batch['rgb1'], \
-                batch['depth1'], \
-                action,reward)
+            ddpg.learn(batch)
 
             env._flush(force=True)
 
             if not(done):
-                state = nextState
+                state0 = state1
             else:
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
@@ -111,10 +98,10 @@ if __name__ == '__main__':
 
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
-        print ("EP: "+str(x+1)+" - [alpha: "+str(round(ddpg.alpha,2))+" - gamma: "+str(round(ddpg.gamma,2))+" - epsilon: "+str(round(ddpg.epsilon,2))+"] - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
+        print ("EP: "+str(x+1)+" - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
 
     #Github table content
-    print ("\n|"+str(total_episodes)+"|"+str(ddpg.alpha)+"|"+str(ddpg.gamma)+"|"+str(initial_epsilon)+"*"+str(epsilon_discount)+"|"+str(highest_reward)+"| PICTURE |")
+    print ("\n|"+str(total_episodes)+"|"+str(highest_reward)+"| PICTURE |")
 
     l = last_time_steps.tolist()
     l.sort()

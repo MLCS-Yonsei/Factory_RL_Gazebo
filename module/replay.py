@@ -7,14 +7,10 @@ class Replay(object):
         self.batch_size=batch_size
         self.currentPosition=-1
         self.buffer={
-            'lidar0':[],
-            'sonar0':[],
-            'rgb0':[],
-            'depth0':[],
-            'lidar1':[],
-            'sonar1':[],
-            'rgb1':[],
-            'depth1':[],
+            'vector0':[],
+            'rgbd0':[],
+            'vector1':[],
+            'rgbd1':[],
             'action0':[],
             'reward':[],
             'done':[]
@@ -26,18 +22,14 @@ class Replay(object):
         if self.buffersize>self.batch_size:
             indices=random.choice(range(self.buffersize),self.batch_size,replace=False)
             Batch={
-                'lidar0':[],
-                'sonar0':[],
-                'rgb0':[],
-                'depth0':[],
-                'lidar1':[],
-                'sonar1':[],
-                'rgb1':[],
-                'depth1':[],
-                'action0':[],
-                'reward':[],
-                'done':[]
-            }
+            'vector0':[],
+            'rgbd0':[],
+            'vector1':[],
+            'rgbd1':[],
+            'action0':[],
+            'reward':[],
+            'done':[]
+        }
             for name in self.buffer.keys():
                 for idx in indices:
                     Batch[name].append(self.buffer[name][idx])
@@ -62,14 +54,10 @@ class Replay(object):
         self.currentPosition=-1
         self.buffersize=0
         self.buffer={
-            'lidar0':[],
-            'sonar0':[],
-            'rgb0':[],
-            'depth0':[],
-            'lidar1':[],
-            'sonar1':[],
-            'rgb1':[],
-            'depth1':[],
+            'vector0':[],
+            'rgbd0':[],
+            'vector1':[],
+            'rgbd1':[],
             'action0':[],
             'reward':[],
             'done':[]
