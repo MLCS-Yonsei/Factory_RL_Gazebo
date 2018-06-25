@@ -167,13 +167,10 @@ class Build_network(object):
                     config.rgbd_dim[2]/ \
                     2**(2*len(layers['rgbd']))
                 ])
-            print type(out_vector)
-            print type(out_rgbd)
-            print type(self.action)
             out_=tf.concat([out_vector,out_rgbd],1) \
                 if name[0]=='a' else \
                 tf.concat([out_vector,out_rgbd,self.action],1)
-            for layer in range(layers['merge']):
+            for layer in range(len(layers['merge'])):
                 out_=self.fc(out_,'merge'+str(layer))
             out_=tf.matmul(out_,self.variables[self.name+'/output/w:0'])
             if name[0]=='a':
