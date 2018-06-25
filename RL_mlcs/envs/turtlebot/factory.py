@@ -57,7 +57,8 @@ class factoryEnv(gazebo_env.GazeboEnv):
                 done = True                
         #RGB reshape        
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[480,640,3])
-        depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])        
+        depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])
+        rgbd = np.concatenate((rgb,depth),axis=2)
         #Relative distance & angle
         dist_to_target = ((self.target_x - pos_data[0])**2 + (self.target_y - pos_data[1])**2)**0.5
         angle_to_target = np.arctan2((self.target_y - pos_data[1]),(self.target_x - pos_data[0])) - pos_data[2]
@@ -66,15 +67,9 @@ class factoryEnv(gazebo_env.GazeboEnv):
         if angle_to_target < -np.pi:
             angle_to_target += 2 * np.pi
         #State = [laser_scan_0 ~ laser_scan_9, sonar_front ~ sonar_ right, v_x_t-1, v_y_t-1, v_z_t-1, angle_to_target, distance_to_target, rgb, depth]
-        state = scan_data
-        state.append(sonar_data)
-        state.append(self.vel_x_prev)
-        state.append(self.vel_y_prev)
-        state.append(self.vel_z_prev)
-        state.append(angle_to_target/np.pi) # Normalize by dividing by pi
-        state.append(dist_to_target/10.0)     # Normalize by dividing by 10
-        state.append(rgb)
-        state.append(depth)
+        state={}
+        state['vector'] = scan_data+sonar_data+[dist_to_target/5.0,angle_to_target/np.pi]
+        state['rgbd'] = rgbd
         if (self.min_dist_range > dist_to_target):
             done = True
         return state,done
@@ -183,7 +178,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         if done:
             self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
-        return np.asarray(state), distance_decrease, done, pos_data, timestamp, {}
+        return state, reward, done, {}
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
@@ -275,7 +270,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
 
         self.state_prev = state
-        return np.asarray(state)
+        return state
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
