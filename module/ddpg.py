@@ -154,10 +154,10 @@ class Build_network(object):
             self.var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,name)
             self.variables={var.name:var for var in self.var_list}
             out_vector=self.state_vector
-            for layer in range(layers['vector']):
+            for layer in range(len(layers['vector'])):
                 out_vector=self.fc(out_vector,'vector'+str(layer))
             out_rgbd=self.state_rgbd
-            for layer in range(layers['rgbd']):
+            for layer in range(len(layers['rgbd'])):
                 out_rgbd=self.conv(out_rgbd,'rgbd'+str(layer))
             out_rgbd=tf.reshape(out_rgbd, \
                 [
@@ -167,8 +167,11 @@ class Build_network(object):
                     config.rgbd_dim[2]/ \
                     2**(2*len(layers['rgbd']))
                 ])
+            print type(out_vector)
+            print type(out_rgbd)
+            print type(self.action)
             out_=tf.concat([out_vector,out_rgbd],1) \
-                if name[0]=='c' else \
+                if name[0]=='a' else \
                 tf.concat([out_vector,out_rgbd,self.action],1)
             for layer in range(layers['merge']):
                 out_=self.fc(out_,'merge'+str(layer))
@@ -211,7 +214,7 @@ class Build_network(object):
                 tf.Variable( \
                     tf.random_normal(shape,stddev=stddev),name='w',trainable=self.trainable)
                 tf.Variable( \
-                    tf.random_normal(shape[1],stddev=stddev),name='b',trainable=self.trainable)
+                    tf.random_normal([shape[1]],stddev=stddev),name='b',trainable=self.trainable)
             else:
                 stddev=1/np.sqrt(shape[0]*shape[1]*shape[2])
                 tf.Variable( \

@@ -1,7 +1,7 @@
 <launch>
   <arg name="robot" default="youbot"/>
   <arg name="paused" value="false"/>
-  <arg name="use_sim_time" default="true"/>
+  <arg name="use_sim_time" default="false"/>
   <arg name="gui" default="true"/>
 
 
@@ -34,13 +34,14 @@
   <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
   	<rosparam param="input_scans">["scan_front","scan_rear"]</rosparam>
   	<param name="loop_rate" value="20.0"/>
+    <param name="/use_sim_time" value="false"/>
    	  <remap from="scan_unified" to="/scan_unified"/>
   </node>
 
   <!-- Base controller muxer -->
   <rosparam file="$(find bringup)/controller/base_controller.yaml" command="load" /> 
   <node pkg="controller_manager" type="spawner" name="base_controller_spawner" args="base_controller" respawn="false" output="screen">
-    <param name="/use_sime_time" value="true"/>
+    <param name="/use_sim_time" value="false"/>
   </node>
 
   <!-- Velocity muxer -->
@@ -57,13 +58,13 @@
   <!-- State publisher -->
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
-    <param name="/use_sime_time" value="true"/>
+    <param name="/use_sim_time" value="false"/>
   </node>
 
   <!-- launch joint state controller -->
   <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
     <param name="publish_frequency" type="double" value="30.0" />
-    <param name="/use_sime_time" value="true"/>
+    <param name="/use_sim_time" value="false"/>
   </node>
 
   <!-- run RViz node (visualization) -->
