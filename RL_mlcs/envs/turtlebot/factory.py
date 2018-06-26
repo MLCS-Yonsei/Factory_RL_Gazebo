@@ -32,31 +32,35 @@ class factoryEnv(gazebo_env.GazeboEnv):
         self.reward_range = (-np.inf, np.inf)
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
-        self.rho_0 = 2.0
         self._seed()
-        self.min_scan_range = 0.4
-        self.min_sonar_range = 0.3
-        self.min_dist_range = 0.1
+        self.min_scan_range = 0.2
+        self.min_sonar_range = 0.2
+        self.min_dist_range = 0.3
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([0.0,-1.0]),high=np.array([0.5,1.0]))
         self.target = [0.0, 0.0]
 
-    def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data):
+    def calculate_observation(self,scan_front,scan_rear,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data):
         scan_data=[]
         sonar_data = []
         done = False
         #Scan normalize by dividing by 10
-        for i, item in enumerate(scan.ranges):
+        for i, item in enumerate(scan_front.ranges):
             if i % 10 == 0:
-                scan_data.append(min(scan.ranges[i:i+9])/10.0)
+                scan_data.append(min(scan_front.ranges[i:i+9])/5.0)
             if (self.min_scan_range > item > 0):
-                done = True        
+                done = True
+        for i, item in enumerate(scan_rear.ranges):
+            if i % 10 == 0:
+                scan_data.append(min(scan_rear.ranges[i:i+9])/5.0)
+            if (self.min_scan_range > item > 0):
+                done = True
         #Sonar unifier
         for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
             sonar_data.append(item.range)
             if (self.min_sonar_range > item.range > 0):
                 done = True                
-        #RGB reshape        
+        #RGB reshape
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[480,640,3])
         depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])
         rgbd = np.concatenate((rgb,depth),axis=2)
@@ -85,6 +89,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         odom_data.append(roll)			# [3]
         odom_data.append(pitch)			# [4]
         odom_data.append(yaw)			# [5]
+        return odom_data
         
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -121,10 +126,11 @@ class factoryEnv(gazebo_env.GazeboEnv):
             except:
                 pass
 
-        scan = None
-        while scan is None:
+        scan_front = None
+        while scan_front is None:
             try:
-                scan = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                scan_front = rospy.wait_for_message('/scan_front', LaserScan, timeout=5)
+                scan_rear = rospy.wait_for_message('/scan_rear', LaserScan, timeout=5)
             except:
                 pass
 
@@ -163,23 +169,24 @@ class factoryEnv(gazebo_env.GazeboEnv):
         if orientation_yaw < -np.pi:
             orientation_yaw += 2 * np.pi
         pos_data = [position_x,position_y,orientation_yaw]
-        state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
+        state,done = self.calculate_observation(scan_front,scan_rear,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
 
         self.vel_x_prev = vel_x
         self.vel_y_prev = vel_y
         self.vel_z_prev = vel_z
 
-        rho = min(state[0:9]) * 10
-        if rho < self.rho_0:
-            featured_scan_data = min((1/rho - 1/self.rho_0)**2, 1.0*(10**30))
-        else:
-            featured_scan_data = 0
-        distance_decrease = (self.state_prev[-1] - state[-1]) * 10.0
-        reward = 50 * distance_decrease - featured_scan_data
+        distance_decrease = (self.state_prev['vector'][-2] - state['vector'][-2]) * 5.0
+        reward = distance_decrease
         if done:
+            reward-=10
+            vel_cmd = Twist()
+            vel_cmd.linear.x = 0.0
+            vel_cmd.linear.y = 0.0
+            vel_cmd.angular.z = 0.0
+            self.vel_pub.publish(vel_cmd)
             self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
-        return state, reward, done, pos_data, {}
+        return state, reward, done, {}
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
@@ -217,7 +224,11 @@ class factoryEnv(gazebo_env.GazeboEnv):
         # self.target = [3.5,-3.5]
         # self.target_x = self.target[0]
         # self.target_y = self.target[1]
-        
+        vel_cmd = Twist()
+        vel_cmd.linear.x = 0.0
+        vel_cmd.linear.y = 0.0
+        vel_cmd.angular.z = 0.0
+        self.vel_pub.publish(vel_cmd)
         odom = None
         while odom is None:
             try:
@@ -225,10 +236,11 @@ class factoryEnv(gazebo_env.GazeboEnv):
             except:
                 pass
 
-        scan = None
-        while scan is None:
+        scan_front = None
+        while scan_front is None:
             try:
-                scan = rospy.wait_for_message('/scan_unified', LaserScan, timeout=5)
+                scan_front = rospy.wait_for_message('/scan_front', LaserScan, timeout=5)
+                scan_rear = rospy.wait_for_message('/scan_rear', LaserScan, timeout=5)
             except:
                 pass
 
@@ -268,10 +280,10 @@ class factoryEnv(gazebo_env.GazeboEnv):
         pos_data = [position_x, position_y, orientation_yaw]
         self.ang_vel_prev = 0
         self.lin_vel_prev = 0
-        state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
+        state,done = self.calculate_observation(scan_front,scan_rear,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
 
         self.state_prev = state
-        return state, pos_data
+        return state
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:

@@ -69,12 +69,16 @@ class DDPG:
             [self.actor_net.a_scale,self.actor_net.a_mean])
 
     def chooseAction(self,state):
-        action=self.sess.run(self.actor_net.out_before_activation, \
-            feed_dict={self.actor_net.state_vector:state['vector'], \
-                       self.actor_net.state_rgbd:state['rgbd']})
-        action=self.a_scale* \
-               np.tanh(action+self.epsilon*np.random.randn(1,self.action_dim))+ \
-               self.a_mean
+        state_vector=np.reshape(state['vector'],[1,-1])
+        state_rgbd=np.reshape(state['rgbd'],[1,480,640,7])
+        action=self.actor_net.evaluate(state_vector,state_rgbd)
+        # action=self.sess.run(self.actor_net.out_before_activation, \
+        #     feed_dict={self.actor_net.state_vector:state_vector, \
+        #                self.actor_net.state_rgbd:state_rgbd})
+        # action=self.a_scale* \
+        #        np.tanh(action+self.epsilon*np.random.randn(1,self.action_dim))+ \
+        #        self.a_mean
+        action=action+self.epsilon*np.random.randn(1,self.action_dim)
         return np.reshape(action,[self.action_dim])
 
     def learn(self,batch):

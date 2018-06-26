@@ -2,6 +2,8 @@ import subprocess
 import time
 import numpy as np
 import math
+import copy
+from random import shuffle
 import commands
 from env_settings import env_config
 
@@ -25,36 +27,39 @@ class env_reset(object):
         self.floor_index = math.floor(np.random.random(1)*(env_config.floor_texture_num))
         self.wall_index = math.floor(np.random.random(1)*(env_config.wall_texture_num))
 
-        self.rand_coord_list = np.random.permutation(env_config.coord_list)
+        self.rand_coord_list = copy.copy(env_config.coord_list)
+        shuffle(self.rand_coord_list)
     
-    def rand_deploy(self,robot_location):
+    def rand_deploy(self):
         np.random.seed(int(math.floor(time.time())))
         tools=[]
         for tool,tool_num in self.tool_list:
-            tools+=[tool for i in range(tool_num)]
+            tools+=[tool+str(i+1) for i in range(tool_num)]
         subprocess.call('rosservice call gazebo/reset_simulation',shell=True)
         
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: floor'+ '%d' %(self.floor_index+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(-12.5, -12.5), shell=True)
 
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: wall'+ '%d' %(self.wall_index+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(-12.5, -12.5), shell=True)
         
-        self.rand_coord_list.remove(robot_location)
-        self.rand_coord_list.append(robot_location)
         for i,tool in enumerate(tools):
-            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: %s'+ '%d' %(tool,i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.rand_coord_list[i][0], self.rand_coord_list[i][1]), shell=True)
-
-# subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: lathe'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.rand_coord_list[i][0], self.rand_coord_list[i][1]), shell=True)
-# subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: systec'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 1.57, w: 1.57 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.rand_coord_list[i][0], self.rand_coord_list[i][1]), shell=True)
+            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: %s' %(tool) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.rand_coord_list[i][0], self.rand_coord_list[i][1]), shell=True)
 
         print('-'*50 +'\n Randomized environment model set done.')
+
+
+
+        print('--------------------------------------------------Start--------------------------------------------------')
+        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: youbot' + ', pose: { position: { x: 0, y: 0 ,z: 10.0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+        print('--------------------------------------------------End--------------------------------------------------')
+
         return self.rand_coord_list[len(tools)]
 
     def gazebo_warmup(self):
         for i in range(0, self.lathe_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[0] +'/model.sdf -sdf -model lathe{0} -y -40 -x -40'.format(i+1), shell=True)
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[0][0] +'/model.sdf -sdf -model lathe{0} -y -40 -x -40'.format(i+1), shell=True)
         
         for i in range(0, self.systec_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[1] +'/model.sdf -sdf -model systec{0} -y -40 -x -40'.format(i+1), shell=True)
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[1][0] +'/model.sdf -sdf -model systec{0} -y -40 -x -40'.format(i+1), shell=True)
 
         for i in range(0, self.floor_texture_num):
             subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_floor/' + self.floor_list[i] +'_floor/model.sdf -sdf -model floor{0} -y -50 -x -50'.format(i+1), shell=True)

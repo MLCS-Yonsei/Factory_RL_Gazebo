@@ -30,7 +30,7 @@ if __name__ == '__main__':
     outdir = '/tmp/gazebo_gym_experiments'
     env = gym.wrappers.Monitor(env, outdir, force=True)
     env.action_space = 3
-    plotter = liveplot.LivePlot(outdir)
+    # plotter = liveplot.LivePlot(outdir)
 
     last_time_steps = numpy.ndarray(0)
 
@@ -51,10 +51,9 @@ if __name__ == '__main__':
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
         # state0 = env.reset()
-        state0, pos_data = env.reset()
-        robot_location = [int(5*round(d/5.0)) for d in pos_data[0:2]]
+        state0 = env.reset()
 
-        env.target = env_reset().rand_deploy(robot_location)
+        env.target = env_reset().rand_deploy()
 
         if ddpg.epsilon > 0.05:
             ddpg.epsilon *= epsilon_discount
@@ -62,11 +61,12 @@ if __name__ == '__main__':
         #render() #defined above, not env.render()
 
         #state = ''.join(map(str, observation))
-
+        state1,reward,done,info = env.step([0.0, 0.0, 0.0])
         for i in range(int(config.max_step)):
 
             # Pick an action based on the current state
             action = ddpg.chooseAction(state0)
+            print(action)
 
             # Execute the action and get feedback
             state1,reward,done,info = env.step(action)
@@ -99,8 +99,8 @@ if __name__ == '__main__':
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
 
-        if x%100==0:
-            plotter.plot(env)
+        # if x%100==0:
+        #     plotter.plot(env)
 
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
