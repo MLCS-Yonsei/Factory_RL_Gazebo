@@ -25,8 +25,8 @@ class env_reset(object):
         self.floor_index = math.floor(np.random.random(1)*(env_config.floor_texture_num))
         self.wall_index = math.floor(np.random.random(1)*(env_config.wall_texture_num))
 
-        self.x_rand_coord_list = np.random.choice(env_config.x_coord_list,self.lathe_num+self.systec_num,replace=True)
-        self.y_rand_coord_list = np.random.choice(env_config.y_coord_list,self.lathe_num+self.systec_num,replace=True)
+        self.x_rand_coord_list = np.random.choice(env_config.x_coord_list,self.lathe_num+self.systec_num+1,replace=True)
+        self.y_rand_coord_list = np.random.choice(env_config.y_coord_list,self.lathe_num+self.systec_num+1,replace=True)
     
     def rand_deploy(self,pos_data):
         np.random.seed(int(math.floor(time.time())))
@@ -49,6 +49,7 @@ class env_reset(object):
                 subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: systec'+ '%d' %(i+1) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 1.57, w: 1.57 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(self.x_rand_coord_list[i+5], self.y_rand_coord_list[i+5]), shell=True)
 
         print('-'*50 +'\n Randomized environment model set done.')
+        return [self.x_rand_coord_list[self.lathe_num+self.systec_num+1], self.y_rand_coord_list[self.lathe_num+self.systec_num+1]]
 
     def gazebo_warmup(self):
         for i in range(0, self.lathe_num):

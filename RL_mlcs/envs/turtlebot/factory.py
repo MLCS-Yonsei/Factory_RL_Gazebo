@@ -39,6 +39,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         self.min_dist_range = 0.1
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([0.0,-1.0]),high=np.array([0.5,1.0]))
+        self.target = None
 
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data):
         scan_data=[]
@@ -186,7 +187,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
 
-    def _reset(self,target):
+    def _reset(self):
         # Resets the state of the environment and returns an initial observation.
         # rospy.wait_for_service('/gazebo/reset_simulation')
         # try:
@@ -202,20 +203,20 @@ class factoryEnv(gazebo_env.GazeboEnv):
             self.unpause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
-        target_set = [[-5,-4],[-5,0],[-5,1],[-5,2],[-5,3],[-5,4],\
-                     [-4,-4],[-4,0],[-4,1],[-4,4],\
-                     [-3,-4],[-3,-3],[-3,-2],[-3,0],[-3,1],[-3,4],\
-                     [-2,1],[-2,2],[-2,3],[-2,4],\
-                     [-1,-2],[-1,-1],[-1,1],[-1,4],\
-                     [0,-4],[0,-3],[0,-2],[0,-1],[0,1],\
-                     [1,-4],[1,-2],[1,-1],[1,0],[1,1],[1,2],[1,3],[1,4],\
-                     [2,-4],[2,-1],[2,0],[2,1],[2,3],[2,4],\
-                     [3,-4],[3,-3],[3,-2],[3,-1],[3,0],[3,1],[3,3],[3,4],\
-                     [4,-4],[4,-3],[4,-2],[4,-1],[4,0],[4,1],[4,2],[4,3],[4,4]]
+        # target_set = [[-5,-4],[-5,0],[-5,1],[-5,2],[-5,3],[-5,4],\
+        #              [-4,-4],[-4,0],[-4,1],[-4,4],\
+        #              [-3,-4],[-3,-3],[-3,-2],[-3,0],[-3,1],[-3,4],\
+        #              [-2,1],[-2,2],[-2,3],[-2,4],\
+        #              [-1,-2],[-1,-1],[-1,1],[-1,4],\
+        #              [0,-4],[0,-3],[0,-2],[0,-1],[0,1],\
+        #              [1,-4],[1,-2],[1,-1],[1,0],[1,1],[1,2],[1,3],[1,4],\
+        #              [2,-4],[2,-1],[2,0],[2,1],[2,3],[2,4],\
+        #              [3,-4],[3,-3],[3,-2],[3,-1],[3,0],[3,1],[3,3],[3,4],\
+        #              [4,-4],[4,-3],[4,-2],[4,-1],[4,0],[4,1],[4,2],[4,3],[4,4]]
         #read scan data
-        self.target = [3.5,-3.5]
-        self.target_x = self.target[0]
-        self.target_y = self.target[1]
+        # self.target = [3.5,-3.5]
+        # self.target_x = self.target[0]
+        # self.target_y = self.target[1]
         
         odom = None
         while odom is None:
