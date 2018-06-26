@@ -51,7 +51,7 @@ if __name__ == '__main__':
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
         # state0 = env.reset()
-        state0,reward,done,pos_data,info = env.step([0.0, 0.0, 0.0])
+        state0, pos_data = env.reset([0.0, 0.0, 0.0])
         robot_location = [int(5*round(d/5.0)) for d in pos_data[0:2]]
 
         env_reset().rand_deploy(robot_location)

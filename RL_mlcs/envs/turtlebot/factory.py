@@ -186,14 +186,14 @@ class factoryEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
 
-    def _reset(self):
+    def _reset(self,target):
         # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
-        try:
-            #reset_proxy.call()reset_proxy.call()
-            self.reset_proxy()
-        except (rospy.ServiceException) as e:
-            print ("/gazebo/reset_simulation service call failed")
+        # rospy.wait_for_service('/gazebo/reset_simulation')
+        # try:
+        #     #reset_proxy.call()reset_proxy.call()
+        #     self.reset_proxy()
+        # except (rospy.ServiceException) as e:
+        #     print ("/gazebo/reset_simulation service call failed")
 
         # Unpause simulation to make observation
         rospy.wait_for_service('/gazebo/unpause_physics')
@@ -270,7 +270,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         state,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data)
 
         self.state_prev = state
-        return state
+        return state, pos_data
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
