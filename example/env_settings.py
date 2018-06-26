@@ -8,7 +8,7 @@ class env_settings(object):
         self.systec_num = 5
         self.floor_list = ['blue', 'darkgrey', 'darkred', 'green', 'lightgrey', 'urethane']
         self.wall_list = ['brownbrick', 'concrete', 'grey', 'oldbrick', 'redbrick']
-        self.tool_list = ['lathe', 'systec']
+        self.tool_list = [('lathe',5), ('systec',5)]
 
         self.floor_texture_num = len(self.floor_list) #Number of the floor type
         self.wall_texture_num = len(self.wall_list) #Number of the wall type
@@ -17,8 +17,10 @@ class env_settings(object):
         self.x_length = 25 #Factory x direction length
         self.y_length = 25 #Factory y direction length
 
-        self.x_coord_list = [-10, -5, 5, 10]
-        self.y_coord_list = [-10, -5, 5, 10]
+        self.coord_list = []
+        for x in range(x):
+            for y in range(y):
+                self.coord_list.append([5*(x-2), 5*(y-2)])
 
 
 env_config = env_settings()
