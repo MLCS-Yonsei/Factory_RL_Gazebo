@@ -39,7 +39,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         self.min_dist_range = 0.1
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([0.0,-1.0]),high=np.array([0.5,1.0]))
-        self.target = None
+        self.target = [0.0, 0.0]
 
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,pos_data):
         scan_data=[]
@@ -61,8 +61,8 @@ class factoryEnv(gazebo_env.GazeboEnv):
         depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,640,4])
         rgbd = np.concatenate((rgb,depth),axis=2)
         #Relative distance & angle
-        dist_to_target = ((self.target_x - pos_data[0])**2 + (self.target_y - pos_data[1])**2)**0.5
-        angle_to_target = np.arctan2((self.target_y - pos_data[1]),(self.target_x - pos_data[0])) - pos_data[2]
+        dist_to_target = ((self.target[0] - pos_data[0])**2 + (self.target[1] - pos_data[1])**2)**0.5
+        angle_to_target = np.arctan2((self.target[1] - pos_data[1]),(self.target[0] - pos_data[0])) - pos_data[2]
         if angle_to_target > np.pi:
             angle_to_target -= 2 * np.pi
         if angle_to_target < -np.pi:
