@@ -6,9 +6,9 @@ class Settings(object):
     def default(self):
         self.gpu=True
         self.vector_dim=[None,36]
-        self.rgbd_dim=[None,480,640,7]
+        self.rgbd_dim=[None,96,128,7]
         self.action_dim=3
-        self.action_bounds=[[0.3,0.3,0.5],[-0.3,-0.3,-0.5]] # [max,min]
+        self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
         self.gamma=0.9 # discount factor
         self.critic_learning_rate=1e-3
         self.actor_learning_rate=1e-4
@@ -25,11 +25,9 @@ class Settings(object):
                 [200,200]
             ],
             'rgbd':[
-                [7,7,7,8],
-                [5,5,8,9],
-                [3,3,9,10],
-                [3,3,10,11],
-                [3,3,11,12]
+                [5,5,7,8],
+                [3,3,8,9],
+                [3,3,9,10]
             ],
             'merge':[
                 [-1,500],

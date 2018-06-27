@@ -1,3 +1,4 @@
+import subprocess
 import gym
 import rospy
 import roslaunch
@@ -14,6 +15,8 @@ from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image 
 
 from gym.utils import seeding
+
+from env_reset import env_reset
 
 class testEnv(gazebo_env.GazeboEnv):
 
@@ -141,13 +144,7 @@ class testEnv(gazebo_env.GazeboEnv):
 
     def _reset(self):
 
-        # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
-        try:
-            #reset_proxy.call()reset_proxy.call()
-            self.reset_proxy()
-        except (rospy.ServiceException) as e:
-            print ("/gazebo/reset_simulation service call failed")
+        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: youbot' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
 
         # Unpause simulation to make observation
         rospy.wait_for_service('/gazebo/unpause_physics')

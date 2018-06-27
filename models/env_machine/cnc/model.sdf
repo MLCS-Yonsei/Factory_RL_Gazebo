@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-  <model name="urethane_floor">
+  <model name="cnc">
     <static>true</static>
     <link name="link">
-      <pose>15 15 0.1 0 0 0</pose>
+      <pose>0 1.5 0.19 0 0 0</pose>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <inertial>
@@ -21,29 +21,17 @@
       <visual name="visual">
         <cast_shadows>false</cast_shadows>
         <geometry>
-          <box>
-            <size>30 30 0.2</size>
-          </box>
+          <mesh>
+            <uri>model://env_machine/cnc/cnc.dae</uri>
+          </mesh>
         </geometry>
-        <material>
-          <script>
-            <uri>model://env_floor/urethane_floor/materials/scripts</uri>
-            <uri>model://env_floor/urethane_floor/materials/textures</uri>
-            <name>vrc/urethane_floor</name>
-          </script>
-          <ambient>1 0.764706 0.305882 1</ambient>
-          <shader type='pixel'/>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive>
-        </material>
       </visual>
       <collision name="collision">
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
         <geometry>
           <box>
-            <size>30 30 0.2</size>
+            <size>3 3 2.8</size>
           </box>
         </geometry>
         <surface>

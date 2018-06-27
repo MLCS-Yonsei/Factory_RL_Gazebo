@@ -48,9 +48,9 @@ if __name__ == '__main__':
 
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
 
+        rand_deploy_list = env_reset().rand_deploy()
+        
         observation = env.reset()
-
-        env_reset().rand_deploy()
         
         if qlearn.epsilon > 0.05:
             qlearn.epsilon *= epsilon_discount
@@ -85,6 +85,7 @@ if __name__ == '__main__':
         
         if x%100==0:
             plotter.plot(env)
+        env_reset().rand_move(rand_deploy_list[1], rand_deploy_list[2])
 
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)

@@ -1,10 +1,10 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="robot" default="youbot"/>
-  <arg name="paused" value="false"/>
+  <arg name="paused" default="false"/>
   <arg name="use_sim_time" default="false"/>
   <arg name="gui" default="true"/>
-
-
+  <arg name="world_name" default="$(env GYM_GAZEBO_WORLD)" />
   <arg name="init_pos_x" default="0.0"/>
   <arg name="init_pos_y" default="0.0"/>
   <arg name="init_pos_z" default="0.2"/>
@@ -16,10 +16,10 @@
     <arg name="gui" value="$(arg gui)" />
     <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
-    <arg name="world_name" value="$(env GYM_GAZEBO_WORLD)"/>
+    <arg name="world_name" value="$(arg world_name)"/>
   </include>
   
-  <!-- upload robot description -->
+  <!-- Upload robot description -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find description)/urdf/robot.urdf.xacro" />
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" respawn="false" output="screen"
     args="-param robot_description
@@ -29,23 +29,39 @@
           -z $(arg init_pos_z)
           -model youbot">
   </node>
-  
+
   <!-- Scan unifier -->
-  <node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
-  	<rosparam param="input_scans">["scan_front","scan_rear"]</rosparam>
-  	<param name="loop_rate" value="20.0"/>
-    <param name="/use_sim_time" value="false"/>
-   	  <remap from="scan_unified" to="/scan_unified"/>
+	<node pkg="cob_scan_unifier" type="scan_unifier_node" name="scan_unifier">
+		<rosparam param="input_scans">["scan_front","scan_rear"]</rosparam>
+		<param name="loop_rate" value="20.0"/>
+		<remap from="scan_unified" to="/scan_unified"/>
+	</node>
+
+  <!-- State publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="100.0" />
+    <param name="/use_sim_time" value="$(arg use_sim_time)"/>
   </node>
 
-  <!-- Base controller muxer -->
+  <!-- Joint state publisher -->
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="100.0" />
+    <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+  </node>
+
+  <!-- Base controller -->
   <rosparam file="$(find bringup)/controller/base_controller.yaml" command="load" /> 
   <node pkg="controller_manager" type="spawner" name="base_controller_spawner" args="base_controller" respawn="false" output="screen">
-    <param name="/use_sim_time" value="false"/>
+    <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+  </node>
+
+  <!-- Joint state controller -->
+  <rosparam file="$(find bringup)/controller/joint_state_controller.yaml" command="load"/> 
+  <node pkg="controller_manager" type="spawner" name="joint_state_controller_spawner" args="joint_state_controller" respawn="false" output="screen">
+    <param name="/use_sim_time" value="$(arg use_sim_time)"/>
   </node>
 
   <!-- Velocity muxer -->
-
   <node pkg="twist_mux" type="twist_mux" ns="mir_command_tools" name="twist_mux" output="screen">
     <remap from="cmd_vel_out" to="/cmd_vel"/>
     <remap from="cmd_vel_prio_high" to="/cmd_vel_prio_high"/>
@@ -55,19 +71,7 @@
     <rosparam file="$(find bringup)/controller/topics.yaml" command="load"/>
   </node>
   
-  <!-- State publisher -->
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
-    <param name="publish_frequency" type="double" value="30.0" />
-    <param name="/use_sim_time" value="false"/>
-  </node>
-
-  <!-- launch joint state controller -->
-  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
-    <param name="publish_frequency" type="double" value="30.0" />
-    <param name="/use_sim_time" value="false"/>
-  </node>
-
   <!-- run RViz node (visualization) -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bringup)/rviz/youbot.rviz"/>
-
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find bringup)/rviz/youbot.rviz">
+  </node>
 </launch>

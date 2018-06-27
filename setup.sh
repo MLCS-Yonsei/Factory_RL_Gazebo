@@ -1,48 +1,48 @@
 #ROS#
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
-sudo apt-get update  -y
-sudo apt-get install ros-kinetic-desktop-full  -y
-sudo rosdep init
-sudo rosdep fix-permissions
-rosdep update
-echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-source ~/.bashrc
-sudo apt-get install python-rosinstall -y
-printenv | grep ROS
-echo "export ROS_MASTER_URI=http://IP_OF_REMOTE_PC" >> ~/.bashrc
-echo "export ROS_HOSTNAME=IP_OF_REMOTE_PC" >> ~/.bashrc
+# sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+# sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+# sudo apt-get update  -y
+# sudo apt-get install ros-kinetic-desktop-full  -y
+# sudo rosdep init
+# sudo rosdep fix-permissions
+# rosdep update
+# echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+# source ~/.bashrc
+# sudo apt-get install python-rosinstall -y
+# printenv | grep ROS
+# echo "export ROS_MASTER_URI=http://IP_OF_REMOTE_PC" >> ~/.bashrc
+# echo "export ROS_HOSTNAME=IP_OF_REMOTE_PC" >> ~/.bashrc
 
 #Gazebo8#
-sudo apt-get update -y
-sudo apt-get upgrade -y
-sudo apt-get remove '.*gazebo.*' '.*sdformat.*' '.*ignition-math.*' '.*ignition-msgs.*' '.*ignition-transport.*'
-sudo apt-get install ros-kinetic-desktop-full -y
-sudo apt-get install libignition-math3 -y
-sudo apt-get install libignition-math3-dev -y
-sudo apt-get install libsdformat5 -y
-sudo apt-get install libsdformat5-dev -y
-sudo apt-get install libgazebo8 -y
-sudo apt-get install libgazebo8-dev -y
-sudo apt-get install gazebo8 -y
-sudo apt-get install gazebo8-plugin-base -y
-sudo apt-get install ros-kinetic-gazebo8-ros -y
-sudo apt-get install ros-kinetic-gazebo8-ros-control -y
-sudo apt-get install ros-kinetic-gazebo8-plugins -y
+# sudo apt-get update -y
+# sudo apt-get upgrade -y
+# sudo apt-get remove '.*gazebo.*' '.*sdformat.*' '.*ignition-math.*' '.*ignition-msgs.*' '.*ignition-transport.*'
+# sudo apt-get install ros-kinetic-desktop-full -y
+# sudo apt-get install libignition-math3 -y
+# sudo apt-get install libignition-math3-dev -y
+# sudo apt-get install libsdformat5 -y
+# sudo apt-get install libsdformat5-dev -y
+# sudo apt-get install libgazebo8 -y
+# sudo apt-get install libgazebo8-dev -y
+# sudo apt-get install gazebo8 -y
+# sudo apt-get install gazebo8-plugin-base -y
+# sudo apt-get install ros-kinetic-gazebo8-ros -y
+# sudo apt-get install ros-kinetic-gazebo8-ros-control -y
+# sudo apt-get install ros-kinetic-gazebo8-plugins -y
 
 #MLCS_sim#
-sudo apt-get install ros-kinetic-joint-state-controller -y
-sudo apt-get install ros-kinetic-joint-state-publisher -y
-sudo apt-get install ros-kinetic-robot-state-publisher -y
-sudo apt-get install ros-kinetic-controller-manager -y
-sudo apt-get install ros-kinetic-controller-interface -y
-sudo apt-get install ros-kinetic-roslint -y
-sudo apt-get install ros-kinetic-control-toolbox -y
-sudo apt-get install ros-kinetic-twist-mux -y
-sudo apt-get install ros-kinetic-pr2-description -y
-sudo apt-get install ros-kinetic-cob-scan-unifier -y
-sudo apt-get install ros-kinetic-gmapping -y
-sudo apt-get install ros-kinetic-kdl-parser -y
+# sudo apt-get install ros-kinetic-joint-state-controller -y
+# sudo apt-get install ros-kinetic-joint-state-publisher -y
+# sudo apt-get install ros-kinetic-robot-state-publisher -y
+# sudo apt-get install ros-kinetic-controller-manager -y
+# sudo apt-get install ros-kinetic-controller-interface -y
+# sudo apt-get install ros-kinetic-roslint -y
+# sudo apt-get install ros-kinetic-control-toolbox -y
+# sudo apt-get install ros-kinetic-twist-mux -y
+# sudo apt-get install ros-kinetic-pr2-description -y
+# sudo apt-get install ros-kinetic-cob-scan-unifier -y
+# sudo apt-get install ros-kinetic-gmapping -y
+# sudo apt-get install ros-kinetic-kdl-parser -y
 
 #Gym gazebo
 sudo apt-get install cmake gcc g++ qt4-qmake libqt4-dev libusb-dev libftdi-dev -y
@@ -68,9 +68,9 @@ pip install rospkg catkin_pkg
 
 
 #Alias#
-echo "alias yb='roslaunch bringup robot.launch'" >> ~/.bashrc
-echo "alias key='roslaunch teleop teleop_keyboard.launch'" >> ~/.bashrc
-echo "alias kg='killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient rviz'" >> ~/.bashrc
+# echo "alias yb='roslaunch bringup robot.launch'" >> ~/.bashrc
+# echo "alias key='roslaunch teleop teleop_keyboard.launch'" >> ~/.bashrc
+# echo "alias kg='killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient rviz'" >> ~/.bashrc
 
 #Installation
 pip install -e .
