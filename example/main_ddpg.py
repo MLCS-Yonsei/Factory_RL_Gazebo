@@ -52,8 +52,9 @@ if __name__ == '__main__':
 
         # state0 = env.reset()
 
-        rand_deploy_list = env_reset().rand_deploy()
-        env.target = rand_deploy_list[0]
+        # rand_deploy_list = env_reset().rand_deploy()
+        # target = rand_deploy_list[0]
+        # env.set_target(target)
 
         state0 = env.reset()
 
@@ -61,7 +62,6 @@ if __name__ == '__main__':
             ddpg.epsilon *= epsilon_discount
 
         #render() #defined above, not env.render()
-        print(env.target)
         # state0,reward,done,info = env.step([0.0, 0.0, 0.0])
         for i in range(int(config.max_step)):
 
@@ -102,7 +102,8 @@ if __name__ == '__main__':
 
         if x%100==0:
             plotter.plot(env)
-        env_reset().rand_move(rand_deploy_list[1], rand_deploy_list[2])
+            numpy.save('weights.npy',ddpg.return_variables())
+        # env_reset().rand_move(rand_deploy_list[1], rand_deploy_list[2])
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
         print ("EP: "+str(x+1)+" - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))

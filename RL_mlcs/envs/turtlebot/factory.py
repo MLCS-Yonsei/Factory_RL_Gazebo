@@ -5,6 +5,7 @@ import roslaunch
 import time
 import subprocess
 import numpy as np
+import math
 
 from gym import utils, spaces
 from RL_mlcs.envs import gazebo_env
@@ -15,6 +16,7 @@ from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
+from env_reset import env_reset
 
 from rosgraph_msgs.msg import Clock
 import tf
@@ -27,7 +29,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "test.launch")
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
-        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=5)
+        self.odom_pub = rospy.Publisher('/odom2', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -41,7 +43,13 @@ class factoryEnv(gazebo_env.GazeboEnv):
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
         self.target = [0.0, 0.0]
+        self.rand_deploy_list=[[None]]
 
+    def set_target(self,target):
+        self.target=target
+        
+    
+    
     def calculate_observation(self,scan_front,scan_rear,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
         scan_data=[]
         sonar_data = []
@@ -54,32 +62,42 @@ class factoryEnv(gazebo_env.GazeboEnv):
             if (self.min_scan_range > item > 0):
                 done = True
                 reward-=10
-        # if done:
-        #     print('lidar_front')
+        if done:
+            print('LiDAR_F detected')
         for i, item in enumerate(scan_rear.ranges):
             if i % 10 == 0:
                 scan_data.append(min(scan_rear.ranges[i:i+9]))
             if (self.min_scan_range > item > 0):
                 done = True
                 reward-=10
-        # if done:
-        #     print('lidar_rear')
+        if done:
+            print('========================================================')
+            print('LiDAR_R detected')
+            print('========================================================')
         #Sonar unifier
         for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
             sonar_data.append(item.range)
             if (self.min_sonar_range > item.range > 0):
                 done = True
                 reward-=10  
-        # if done:
-        #     print('sonar')
- 
+        if done:
+            print('========================================================')
+            print('Sonar detected')
+            print('========================================================')
         #RGB reshape
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
         depth = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
         rgbd = np.concatenate((rgb,depth),axis=2)
         #Relative distance & angle
-        dist_to_target = ((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)**0.5
-        # print(dist_to_target)
+        dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
+        print('========================================================')
+        print('Target pose')
+        print(self.target)
+        print('Odom')
+        print(odom_data[:2])
+        print('Distance to Goal')
+        print(dist_to_target)
+        print('========================================================')
         angle_to_target = np.arctan2((self.target[1] - odom_data[1]),(self.target[0] - odom_data[0])) - odom_data[2]
         if angle_to_target > np.pi:
             angle_to_target -= 2 * np.pi
@@ -92,7 +110,9 @@ class factoryEnv(gazebo_env.GazeboEnv):
         if (self.min_dist_range > dist_to_target):
             done = True
             reward+=10
-            # print('target to goal')
+            print('========================================================')
+            print('Goal arrived')
+            print('========================================================')
         return state,reward,done
 
 
@@ -139,7 +159,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         odom = None
         while odom is None:
             try:
-                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+                odom = rospy.wait_for_message('/odom2', Odometry, timeout=5).pose.pose
             except:
                 pass
 
@@ -212,6 +232,8 @@ class factoryEnv(gazebo_env.GazeboEnv):
         return state, reward, done, {}
 
     def _reset(self):
+        if self.rand_deploy_list[0][0] is not None:
+            env_reset().rand_move(self.rand_deploy_list[1], self.rand_deploy_list[2])
         # Resets the state of the environment and returns an initial observation.
         # rospy.wait_for_service('/gazebo/reset_simulation')
         # try:
@@ -219,21 +241,23 @@ class factoryEnv(gazebo_env.GazeboEnv):
         #     self.reset_proxy()
         # except (rospy.ServiceException) as e:
         #     print ("/gazebo/reset_simulation service call failed")
+        self.rand_deploy_list = env_reset().rand_deploy()
+        self.target = self.rand_deploy_list[0]
 
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: youbot' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
-        odom_reset = Odometry()
-        odom_reset.header.stamp = rospy.Time.now()
-        odom_reset.header.frame_id = "odom"
-        odom_reset.pose.pose.position.x = 0.0
-        odom_reset.pose.pose.position.y = 0.0
-        odom_reset.pose.pose.position.z = 0.0
-        odom_reset.pose.pose.orientation.z = 0.0
-        odom_reset.pose.pose.orientation.w = 0.0
-        odom_reset.child_frame_id = "base_footprint"
-        odom_reset.twist.twist.linear.x = 0.0
-        odom_reset.twist.twist.linear.y = 0.0
-        odom_reset.twist.twist.angular.z = 0.0
-        self.odom_pub.publish(odom_reset)
+        # odom_reset = Odometry()
+        # odom_reset.header.stamp = rospy.Time.now()
+        # odom_reset.header.frame_id = "odom"
+        # odom_reset.pose.pose.position.x = 0.0
+        # odom_reset.pose.pose.position.y = 0.0
+        # odom_reset.pose.pose.position.z = 0.0
+        # odom_reset.pose.pose.orientation.z = 0.0
+        # odom_reset.pose.pose.orientation.w = 0.0
+        # odom_reset.child_frame_id = "base_footprint"
+        # odom_reset.twist.twist.linear.x = 0.0
+        # odom_reset.twist.twist.linear.y = 0.0
+        # odom_reset.twist.twist.angular.z = 0.0
+        # self.odom_pub.publish(odom_reset)
         # Unpause simulation to make observation        
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
@@ -264,7 +288,7 @@ class factoryEnv(gazebo_env.GazeboEnv):
         odom = None
         while odom is None:
             try:
-                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+                odom = rospy.wait_for_message('/odom2', Odometry, timeout=5).pose.pose
             except:
                 pass
 
