@@ -13,14 +13,16 @@ class env_reset(object):
 
         self.floor_list = env_config.floor_list
         self.wall_list = env_config.wall_list
-        self.tool_list = env_config.tool_list
+        self.tool_list_large = env_config.tool_list_large
+        self.tool_list_medium = env_config.tool_list_medium
+        self.tool_list_small = env_config.tool_list_small
 
         self.floor_texture_num = env_config.floor_texture_num
         self.wall_texture_num = env_config.wall_texture_num
         self.tool_num = env_config.tool_num
-        self.lathe_num = env_config.lathe_num
-        self.systec_num = env_config.systec_num
-        self.cnc_num = env_config.cnc_num
+        self.tool_large_num = env_config.tool_large_num
+        self.tool_medium_num = env_config.tool_medium_num
+        self.tool_small_num = env_config.tool_small_num
 
         self.x_length = env_config.x_length
         self.y_length = env_config.y_length
