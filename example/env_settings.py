@@ -14,7 +14,7 @@ class env_settings(object):
         self.wall_texture_num = len(self.wall_list) #Number of the wall type
         self.tool_large_num = len(self.tool_list_large)
         self.tool_medium_num = len(self.tool_list_medium)
-        self.tool_smalll_num = len(self.tool_list_small)
+        self.tool_small_num = len(self.tool_list_small)
         
         self.tool_large_num_desired = 2
         self.tool_medium_num_desired = 4

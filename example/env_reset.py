@@ -19,20 +19,22 @@ class env_reset(object):
 
         self.floor_texture_num = env_config.floor_texture_num
         self.wall_texture_num = env_config.wall_texture_num
-        self.tool_num = env_config.tool_num
         self.tool_large_num = env_config.tool_large_num
         self.tool_medium_num = env_config.tool_medium_num
         self.tool_small_num = env_config.tool_small_num
+        
+        self.tool_large_num_desired = env_config.tool_large_num_desired
+        self.tool_medium_num_desired = env_config.tool_medium_num_desired
+        self.tool_small_num_desired = env_config.tool_small_num_desired
+        self.coord_list_large = env_config.coord_list_large
+        self.coord_list_medium = env_config.coord_list_medium
+        self.coord_list_small = env_config.coord_list_small
 
         self.x_length = env_config.x_length
         self.y_length = env_config.y_length
 
         self.floor_index = math.floor(np.random.random(1)*(env_config.floor_texture_num))
         self.wall_index = math.floor(np.random.random(1)*(env_config.wall_texture_num))
-
-
-        self.rand_coord_list = copy.copy(env_config.coord_list)
-        shuffle(self.rand_coord_list)
     
     def rand_deploy(self):
         np.random.seed(int(math.floor(time.time())))
@@ -52,20 +54,20 @@ class env_reset(object):
         return self.rand_coord_list[len(tools)], self.floor_index+1, self.wall_index+1
 
     def gazebo_warmup(self):
-        for i in range(0, self.lathe_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[0][0] +'/model.sdf -sdf -model lathe{0} -y -40 -x -40'.format(i+1), shell=True)
+        for tool_ in self.tool_list_large:
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
         
-        for i in range(0, self.systec_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[1][0] +'/model.sdf -sdf -model systec{0} -y -40 -x -40'.format(i+1), shell=True)
+        for tool_ in self.tool_list_medium:
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+tool_+' -y -40 -x -40', shell=True)
         
-        for i in range(0, self.cnc_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + self.tool_list[2][0] +'/model.sdf -sdf -model cnc{0} -y -40 -x -40'.format(i+1), shell=True)
+        for tool_ in self.tool_list_small:
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
 
-        for i in range(0, self.floor_texture_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_floor/' + self.floor_list[i] +'_floor/model.sdf -sdf -model floor{0} -y -50 -x -50'.format(i+1), shell=True)
+        for floor_ in self.floor_list:
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_floor/' + floor_ +'_floor/model.sdf -sdf -model '+ floor_ +'_floor -y -50 -x -50', shell=True)
 
-        for i in range(0, self.wall_texture_num):
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_wall/' + self.wall_list[i] +'_wall/model.sdf -sdf -model wall{0} -y -50 -x -50'.format(i+1), shell=True)
+        for wall_ in self.wall_list:
+            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_wall/' + wall_ +'_wall/model.sdf -sdf -model '+ wall_ +'_wall -y -50 -x -50', shell=True)
 
         time.sleep(5)
 
