@@ -22,8 +22,8 @@ class env_settings(object):
 
         self.x_length = 40 #Factory x direction length
         self.y_length = 30 #Factory y direction length
-        self.coord_list_large = [(-10,-11),(10,-11)]
-        self.coord_list_medium = [(-15,11.5),(-5,11.5),(5,11.5),(15,11.5)]
+        self.coord_list_large = [(-10,-10),(10,-10)]
+        self.coord_list_medium = [(-15,10.5),(-5,10.5),(5,10.5),(15,10.5)]
         self.coord_list_small = []
         for x in range(0,8):
             for y in range(0,3):

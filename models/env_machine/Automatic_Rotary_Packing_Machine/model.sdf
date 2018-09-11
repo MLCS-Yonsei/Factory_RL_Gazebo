@@ -3,7 +3,7 @@
   <model name='Automatic_Rotary_Packing_Machine'>
     <static>true</static>
     <link name='link_0'>
-      <inertial>
+      <!-- <inertial>
         <mass>1</mass>
         <inertia>
           <ixx>0.166667</ixx>
@@ -13,7 +13,7 @@
           <iyz>0</iyz>
           <izz>0.166667</izz>
         </inertia>
-      </inertial>
+      </inertial> -->
       <pose frame=''>-0 0 0 0 -0 0</pose>
       <visual name='visual'>
         <pose frame=''>0 0 0.2 0 -0 0</pose>

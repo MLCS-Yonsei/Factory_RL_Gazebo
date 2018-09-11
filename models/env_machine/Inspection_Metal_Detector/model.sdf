@@ -3,7 +3,7 @@
   <model name='Inspection_Metal_Detector'>
   <static>true</static>
     <link name='link_0'>
-      <inertial>
+      <!-- <inertial>
         <mass>1</mass>
         <inertia>
           <ixx>0.166667</ixx>
@@ -14,14 +14,14 @@
           <izz>0.166667</izz>
         </inertia>
         <pose frame=''>0 0 0 0 -0 0</pose>
-      </inertial>
+      </inertial> -->
       <pose frame=''>0 -0 0 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>0</kinematic>
       <enable_wind>0</enable_wind>
       <visual name='visual'>
-        <pose frame=''>0 0 0.2 0 -0 0</pose>
+        <pose frame=''>-1 -2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Inspection_Metal_Detector/meshes/model.dae</uri>
@@ -34,7 +34,7 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose frame=''>0 0 0.2 0 -0 0</pose>
+        <pose frame=''>-1 -2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://Inspection_Metal_Detector/meshes/model.dae</uri>
