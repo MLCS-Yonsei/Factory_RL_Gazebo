@@ -15,24 +15,24 @@
 # echo "export ROS_HOSTNAME=localhost" >> ~/.bashrc
 
 #Gazebo8#
-# sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
-# cat /etc/apt/sources.list.d/gazebo-stable.list
-# wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-# sudo apt-get update -y
-# sudo apt-get upgrade -y
-# sudo apt-get remove '.*gazebo.*' '.*sdformat.*' '.*ignition-math.*' '.*ignition-msgs.*' '.*ignition-transport.*' -y
-# sudo apt-get install ros-kinetic-desktop-full -y
-# sudo apt-get install libignition-math3 -y
-# sudo apt-get install libignition-math3-dev -y
-# sudo apt-get install libsdformat5 -y
-# sudo apt-get install libsdformat5-dev -y
-# sudo apt-get install libgazebo8 -y
-# sudo apt-get install libgazebo8-dev -y
-# sudo apt-get install gazebo8 -y
-# sudo apt-get install gazebo8-plugin-base -y
-# sudo apt-get install ros-kinetic-gazebo8-ros -y
-# sudo apt-get install ros-kinetic-gazebo8-ros-control -y
-# sudo apt-get install ros-kinetic-gazebo8-plugins -y
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+cat /etc/apt/sources.list.d/gazebo-stable.list
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get remove '.*gazebo.*' '.*sdformat.*' '.*ignition-math.*' '.*ignition-msgs.*' '.*ignition-transport.*' -y
+sudo apt-get install ros-kinetic-desktop-full -y
+sudo apt-get install libignition-math3 -y
+sudo apt-get install libignition-math3-dev -y
+sudo apt-get install libsdformat5 -y
+sudo apt-get install libsdformat5-dev -y
+sudo apt-get install libgazebo8 -y
+sudo apt-get install libgazebo8-dev -y
+sudo apt-get install gazebo8 -y
+sudo apt-get install gazebo8-plugin-base -y
+sudo apt-get install ros-kinetic-gazebo8-ros -y
+sudo apt-get install ros-kinetic-gazebo8-ros-control -y
+sudo apt-get install ros-kinetic-gazebo8-plugins -y
 
 #MLCS_sim#
 sudo apt-get install ros-kinetic-joint-state-controller -y
@@ -84,20 +84,20 @@ pip install rospkg catkin_pkg
 # echo "alias kg='killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient rviz'" >> ~/.bashrc
 
 #Installation
-pip install -e .
+# pip install -e .
 
-source /opt/ros/kinetic/setup.bash
+# source /opt/ros/kinetic/setup.bash
 
-if [ -z "$GYM_GAZEBO_WORLD" ]; then
-  bash -c 'echo "export GYM_GAZEBO_WORLD="`pwd`/../world/test.world >> ~/.bashrc'
-  exec bash
-fi
-if [ -z "$GAZEBO_MODEL_PATH" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../models >> ~/.bashrc'
-  exec bash
-fi
-source ~/.bashrc
-echo "## Installation complete!! ##"
+# if [ -z "$GYM_GAZEBO_WORLD" ]; then
+#   bash -c 'echo "export GYM_GAZEBO_WORLD="`pwd`/../world/test.world >> ~/.bashrc'
+#   exec bash
+# fi
+# if [ -z "$GAZEBO_MODEL_PATH" ]; then
+#   bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../models >> ~/.bashrc'
+#   exec bash
+# fi
+# source ~/.bashrc
+# echo "## Installation complete!! ##"
 
 
 

@@ -16,7 +16,7 @@
       </inertial> -->
       <pose frame=''>-5e-06 -0 0 0 -0 0</pose>
       <visual name='visual'>
-        <pose frame=''>4 -2.5 0.2 0 -0 1.57</pose>
+        <pose frame=''>4 -1.5 0.2 0 -0 1.57</pose>
         <geometry>
           <mesh>
             <uri>model://cnc_hard/meshes/model.dae</uri>
@@ -29,7 +29,7 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose frame=''>4 -2.5 0.2 0 -0 1.57</pose>
+        <pose frame=''>4 -1.5 0.2 0 -0 1.57</pose>
         <geometry>
           <mesh>
             <uri>model://cnc_hard/meshes/model.dae</uri>
