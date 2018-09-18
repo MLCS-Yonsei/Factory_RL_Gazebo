@@ -30,6 +30,6 @@ sh setup.sh
 ### Running an environment
 
 ```bash
-cd Factory_RL_Gazebo/example
-python main.py
+cd Factory_RL_Gazebo/runfile
+python run_*.py
 ```
