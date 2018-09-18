@@ -37,6 +37,11 @@ if __name__ == '__main__':
     ddpg = ddpg.DDPG(config)
 
     memory = replay.Replay(config.max_buffer, config.batch_size)
+    if config.load_buffer:
+        try:
+            memory.buffer=numpy.load('buffer.npy').item()
+        except:
+            pass
 
     initial_epsilon = ddpg.epsilon
 
@@ -73,6 +78,7 @@ if __name__ == '__main__':
                 'done':done
             }
             memory.add(experience)
+            numpy.save('buffer.npy',memory.buffer)
 
             cumulated_reward += reward
 

@@ -4,6 +4,7 @@ class Settings(object):
         self.default()
 
     def default(self):
+        self.load_buffer=True
         self.gpu=True
         self.vector_dim=[None,36]
         self.rgbd_dim=[None,96,128,7]
