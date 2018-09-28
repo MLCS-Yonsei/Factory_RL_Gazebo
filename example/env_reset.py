@@ -65,26 +65,26 @@ class env_reset(object):
 
         return chosen_floor, chosen_wall, chosen_large_tools, chosen_medium_tools, chosen_small_tools
 
-    def gazebo_warmup(self):
-        for tool_ in self.tool_list_large:
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
-            time.sleep(30)
+    # def gazebo_warmup(self):
+    #     for tool_ in self.tool_list_large:
+    #         subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
+    #         time.sleep(30)
         
-        for tool_ in self.tool_list_medium:
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+tool_+' -y -40 -x -40', shell=True)
-            time.sleep(30)
+    #     for tool_ in self.tool_list_medium:
+    #         subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+tool_+' -y -40 -x -40', shell=True)
+    #         time.sleep(30)
         
-        for tool_ in self.tool_list_small:
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
-            time.sleep(30)
+    #     for tool_ in self.tool_list_small:
+    #         subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_machine/' + tool_ +'/model.sdf -sdf -model '+ tool_ +' -y -40 -x -40', shell=True)
+    #         time.sleep(30)
 
-        for floor_ in self.floor_list:
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_floor/' + floor_ +'_floor/model.sdf -sdf -model '+ floor_ +'_floor -y -50 -x -50', shell=True)
+    #     for floor_ in self.floor_list:
+    #         subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_floor/' + floor_ +'_floor/model.sdf -sdf -model '+ floor_ +'_floor -y -50 -x -50', shell=True)
 
-        for wall_ in self.wall_list:
-            subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_wall/' + wall_ +'_wall/model.sdf -sdf -model '+ wall_ +'_wall -y -50 -x -50', shell=True)
+    #     for wall_ in self.wall_list:
+    #         subprocess.call('rosrun gazebo_ros spawn_model -file ' + self.gazebo_model_path + 'env_wall/' + wall_ +'_wall/model.sdf -sdf -model '+ wall_ +'_wall -y -50 -x -50', shell=True)
 
-        time.sleep(15)
+    #     time.sleep(15)
 
     def rand_move(self, chosen_floor, chosen_wall, chosen_large_tools, chosen_medium_tools, chosen_small_tools):
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: ' + str(chosen_floor) +'_floor, pose: { position: { x: -50, y: -50 ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
