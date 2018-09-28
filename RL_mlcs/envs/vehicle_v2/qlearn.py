@@ -21,8 +21,7 @@ from env_reset import env_reset
 class qlearnEnv(gazebo_env.GazeboEnv):
 
     def __init__(self):
-        # Launch the simulation with the given launchfile name
-        gazebo_env.GazeboEnv.__init__(self, "youbot.launch")
+        gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
         self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
@@ -125,7 +124,6 @@ class qlearnEnv(gazebo_env.GazeboEnv):
 
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
-            #resp_pause = pause.call()
             self.pause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
@@ -144,12 +142,11 @@ class qlearnEnv(gazebo_env.GazeboEnv):
 
     def _reset(self):
 
-        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: youbot' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
 
         # Unpause simulation to make observation
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
-            #resp_pause = pause.call()
             self.unpause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
@@ -172,7 +169,6 @@ class qlearnEnv(gazebo_env.GazeboEnv):
     
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
-            #resp_pause = pause.call()
             self.pause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
