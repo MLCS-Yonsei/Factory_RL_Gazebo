@@ -7,7 +7,7 @@ material vrc/green_floor
 		{
 			texture_unit
 			{
-				texture green_floor.png
+				texture green_floor.jpg
 				filtering anistropic
 				max_anisotropy 16
 				scale 1 1

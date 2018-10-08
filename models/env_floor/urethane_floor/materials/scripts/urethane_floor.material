@@ -7,7 +7,7 @@ material vrc/urethane_floor
 		{
 			texture_unit
 			{
-				texture urethane_floor.png
+				texture urethane_floor.jpg
 				filtering anistropic
 				max_anisotropy 0
 				scale 1 1

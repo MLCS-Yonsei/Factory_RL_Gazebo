@@ -7,7 +7,7 @@ material vrc/darkgrey_floor
 		{
 			texture_unit
 			{
-				texture darkgrey_floor.png
+				texture darkgrey_floor.jpg
 				filtering anistropic
 				max_anisotropy 16
 				scale 1 1
