@@ -25,6 +25,8 @@ if __name__ == '__main__':
 
     env = gym.make('ddpg-v0')
 
+    env_reset().gazebo_warmup()
+
     outdir = '/tmp/gazebo_gym_experiments'
     # env = gym.wrappers.Monitor(env, outdir, force=True)
     env.action_space = 3
@@ -50,11 +52,8 @@ if __name__ == '__main__':
 
     for x in range(int(config.max_episode)):
         done = False
-
         cumulated_reward = 0 #Should going forward give more reward then L/R ?
-
         state0 = env.reset()
-
         if ddpg.epsilon > 0.05:
             ddpg.epsilon *= epsilon_discount
 
@@ -65,7 +64,7 @@ if __name__ == '__main__':
 
             # Execute the action and get feedback
             state1,reward,done,info = env.step(action)
-            # print('action:',action,'  Done:',done)
+            print('action:',action,'  Done:',done)
             experience={
                 'vector0':state0['vector'],
                 'rgbd0':state0['rgbd'],

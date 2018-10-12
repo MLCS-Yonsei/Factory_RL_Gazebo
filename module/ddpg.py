@@ -71,7 +71,7 @@ class DDPG:
 
     def chooseAction(self,state):
         state_vector=np.reshape(state['vector'],[1,-1])
-        state_rgbd=np.reshape(state['rgbd'],[1,96,128,7])
+        state_rgbd=np.reshape(state['rgbd'],[1,480,720,7])
         action=self.actor_net.evaluate(state_vector,state_rgbd)
         # action=self.sess.run(self.actor_net.out_before_activation, \
         #     feed_dict={self.actor_net.state_vector:state_vector, \

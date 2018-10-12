@@ -62,7 +62,7 @@ class qlearnEnv(gazebo_env.GazeboEnv):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, action):
+    def step(self, action):
 
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
@@ -140,7 +140,7 @@ class qlearnEnv(gazebo_env.GazeboEnv):
 
         return state, reward, done, {}
 
-    def _reset(self):
+    def reset(self):
 
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
 
