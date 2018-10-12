@@ -62,10 +62,23 @@ class env_reset(object):
             subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: ' + str(chosen_small_tools[i]) +', pose: { position: { x: %d, y: %d ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'' %(index_[0], index_[1]), shell=True)
 
         empty_coord = list(set(self.coord_list_small)-set(chosen_small_tools_coord))
+        
+        self.chosen_floor=chosen_floor
+        self.chosen_wall=chosen_wall
+        self.chosen_large_tools=chosen_large_tools
+        self.chosen_medium_tools=chosen_medium_tools
+        self.chosen_small_tools=chosen_small_tools
 
-        return chosen_floor, chosen_wall, chosen_large_tools, chosen_medium_tools, chosen_small_tools, empty_coord
+        return empty_coord
 
-    def rand_move(self, chosen_floor, chosen_wall, chosen_large_tools, chosen_medium_tools, chosen_small_tools):
+    def rand_move(self):
+
+        chosen_floor=self.chosen_floor
+        chosen_wall=self.chosen_wall
+        chosen_large_tools=self.chosen_large_tools
+        chosen_medium_tools=self.chosen_medium_tools
+        chosen_small_tools=self.chosen_small_tools
+
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: ' + str(chosen_floor) +'_floor, pose: { position: { x: -50, y: -50 ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
 
         subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: ' + str(chosen_wall) +'_wall, pose: { position: { x: -50, y: -50 ,z: 0 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
