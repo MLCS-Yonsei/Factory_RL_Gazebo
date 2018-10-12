@@ -39,13 +39,14 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
         self._seed()
-        self.min_scan_range = 0.2
-        self.min_sonar_range = 0.1
-        self.min_dist_range = 0.1
+        self.min_scan_range = 0.6
+        self.min_sonar_range = 0.6
+        self.min_dist_range = 0.3
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
         self.target = [0.0, 0.0]
-        self.rand_deploy_list=None
+        self.env_reset = env_reset()
+        self.rand_deploy_list = None
         
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
         scan_data=[]
@@ -209,9 +210,9 @@ class ddpgEnv(gazebo_env.GazeboEnv):
 
     def reset(self):
         if self.rand_deploy_list is not None:
-            env_reset().rand_move()
+            self.env_reset.rand_move()
  
-        self.rand_deploy_list = env_reset().rand_deploy()
+        self.rand_deploy_list = self.env_reset.rand_deploy()
         
         self.target = choice(self.rand_deploy_list)
         
