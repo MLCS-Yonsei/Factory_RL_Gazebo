@@ -1,5 +1,6 @@
 
 *.pyc
+*.npy
 *.DS_STORE
 RL_mlcs.egg-info/PKG-INFO
 RL_mlcs.egg-info/SOURCES.txt
