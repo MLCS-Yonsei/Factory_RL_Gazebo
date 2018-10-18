@@ -8,12 +8,18 @@ class Settings(object):
         self.gpu=True
         
         # dimension setup
-        self.range_dim=(36)
-        self.proximity_dim=(4)
-        self.control_dim=(3)
-        self.rgbd_dim=(96,128,7)
-        self.state_dim=(50)
-        self.action_dim=(3)
+        self.observation_dim={
+            'lidar':[36],
+            'proximity':[4],
+            'control':[3],
+            'rgbd':[96,128,4]
+        }
+        self.lidar_dim=[36]
+        self.proximity_dim=[4]
+        self.control_dim=[3]
+        self.rgbd_dim=[96,128,4]
+        self.state_dim=[50]
+        self.action_dim=[3]
         
         self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
         self.gamma=0.9 # discount factor
@@ -26,39 +32,43 @@ class Settings(object):
         self.max_step=1e+3
         self.max_episode=1e+4
         self.max_epoch=1e+7
-        self.networks={
-            'range':[
-                ('fc',self.range_dim[0],200),
-                ('fc',200,self.state_dim[0])
+        self.observation_networks={
+            'lidar':[
+                ('fc',[self.lidar_dim[0],200]),
+                ('fc',[200,self.state_dim[0]])
             ],
             'proximity':[
-               ('fc',self.proximity_dim[0],200),
+               ('fc',[self.proximity_dim[0],200]),
                 ('fc',200,self.state_dim[0])
             ],
             'control':[
-                ('fc',self.control_dim[0],200),
-                ('fc',200,self.state_dim[0])
+                ('fc',[self.control_dim[0],200]),
+                ('fc',[200,self.state_dim[0]])
             ],
             'rgbd':[
-                ('conv',5,5,7,8),
-                ('conv',3,3,8,9),
-                ('conv',3,3,9,10)
-            ],
+                ('conv',[5,5,7,8]),
+                ('conv',[3,3,8,9]),
+                ('conv',[3,3,9,10])
+            ]
+        }
+        self.prediction_networks={
             'reward_prediction':[
-                ('fc',self.state_dim[0],60),
-                ('fc',40,30)
+                ('fc',[self.state_dim[0],60]),
+                ('fc',[40,30])
             ],
             'state_prediction':[
-                ('fc',self.state_dim[0],100),
-                ('fc',100,80)
-            ],
+                ('fc',[self.state_dim[0],100]),
+                ('fc',[100,80])
+            ]
+        }
+        self.rl_networks={
             'actor':[
-                ('fc',self.state_dim[0],40),
-                ('fc',40,30)
+                ('fc',[self.state_dim[0],40]),
+                ('fc',[40,30])
             ],
             'critic':[
-                ('fc',self.state_dim[0],40),
-                ('fc',40+self.action_dim[0],30)
+                ('fc',[self.state_dim[0],40]),
+                ('fc',[40+self.action_dim[0],30])
             ]
         }
 

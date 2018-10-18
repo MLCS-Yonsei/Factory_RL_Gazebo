@@ -2,35 +2,24 @@ from numpy import random
 
 class Replay(object):
     
-    def __init__(self,max_buffer,batch_size):
+    def __init__(self,max_buffer,batch_size,observations=False):
         self.max_buffer=max_buffer
         self.batch_size=batch_size
         self.currentPosition=-1
-        self.buffer={
-            'vector0':[],
-            'rgbd0':[],
-            'vector1':[],
-            'rgbd1':[],
-            'action0':[],
-            'reward':[],
-            'done':[]
-        }
+        if not observations:
+            observations=['vector0','rgbd0']
+        self.bufferkeys=[key+'0' for key in observations]+ \
+                        [key+'1' for key in observations]+ \
+                        ['action0','reward','done']
+        self.buffer={key:[] for key in self.bufferkeys}
         self.buffersize=0
         self.max=False
 
     def batch(self):
         if self.buffersize>self.batch_size:
             indices=random.choice(range(self.buffersize),self.batch_size,replace=False)
-            Batch={
-            'vector0':[],
-            'rgbd0':[],
-            'vector1':[],
-            'rgbd1':[],
-            'action0':[],
-            'reward':[],
-            'done':[]
-        }
-            for name in self.buffer.keys():
+            Batch={key:[] for key in self.buffer.keys()}
+            for key in self.buffer.keys():
                 for idx in indices:
                     Batch[name].append(self.buffer[name][idx])
             return Batch
@@ -53,13 +42,5 @@ class Replay(object):
     def clear(self):
         self.currentPosition=-1
         self.buffersize=0
-        self.buffer={
-            'vector0':[],
-            'rgbd0':[],
-            'vector1':[],
-            'rgbd1':[],
-            'action0':[],
-            'reward':[],
-            'done':[]
-        }
+        self.buffer={key:[] for key in self.bufferkeys}
         self.max=False

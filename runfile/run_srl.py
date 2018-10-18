@@ -1,13 +1,12 @@
 #!/usr/bin/env python
+import time
 import gym
 import RL_mlcs
-import time
 import numpy
 import random
-import time
 
 from env_reset import env_reset
-from module import srl, replay, liveplot
+from module import srl, srl_replay, liveplot
 
 from srl_config import config
 
@@ -25,7 +24,7 @@ if __name__ == '__main__':
 
     env = gym.make('ddpg-v0')
 
-    env_reset().gazebo_warmup()
+    #env_reset().gazebo_warmup()
 
     outdir = '/tmp/gazebo_gym_experiments'
     # env = gym.wrappers.Monitor(env, outdir, force=True)
@@ -36,7 +35,9 @@ if __name__ == '__main__':
 
     srl = srl.SRL(config)
 
-    memory = replay.Replay(config.max_buffer, config.batch_size)
+    memory = replay.Replay(config.max_buffer, \
+                           config.batch_size, \
+                           observations='lidar','rgbd','proximity','control'])
     if config.load_buffer:
         try:
             memory.buffer=numpy.load('buffer.npy').item()
@@ -69,10 +70,14 @@ if __name__ == '__main__':
             state1,reward,done,info = env.step(action)
             # print('action:',action,'  Done:',done)
             experience={
-                'vector0':state0['vector'],
+                'lidar0':state0['lidar'],
                 'rgbd0':state0['rgbd'],
-                'vector1':state1['vector'],
-                'rgbd1':state0['rgbd'],
+                'proximity0':state0['proximity'],
+                'control0':state0['control'],
+                'lidar1':state1['lidar'],
+                'rgbd1':state1['rgbd'],
+                'proximity1':state1['proximity'],
+                'control1':state1['control'],
                 'action0':action,
                 'reward':reward,
                 'done':done

@@ -19,9 +19,16 @@ class SRL:
         self.gamma=tf.constant(config.gamma,dtype=tf.float32,name='gamma')
         self.sess=tf.Session(config=sess_config)
         self.var_init=tf.global_variables_initializer()
-        self.reward=tf.placeholder(tf.float32,[None,1])
-        self.done=tf.placeholder(tf.float32,[None,1])
-        self.target_q=tf.placeholder(tf.float32,[None,1])
+        self.reward=tf.placeholder(tf.float32,[None,1],name='reward')
+        self.done=tf.placeholder(tf.float32,[None,1],name='done')
+        self.target_q=tf.placeholder(tf.float32,[None,1],name='target_q')
+        self.target_state=tf.placeholder(tf.float32,[None]+config.state_dim)
+        # observation networks
+        for key in config.observation_networks.keys():
+            with tf.name_scope(key+'_net'):
+                self.observation[name] = tf.placeholder( \
+                        tf.float32,[None]+config.observation_dim[name])
+                create_variable()
         # self.noise=tf.placeholder(tf.float32,[None,config.action_dim])
         # build network
         self.actor_net=Build_AC(self.sess,config,'actor_net')
@@ -124,12 +131,13 @@ class SRL:
                **{name:self.sess.run(name) \
                     for name in self.critic_net.variables.keys()})
 
+
 class Build_network(object):
 
-    def __init__(self,sess,config,name,trainable=True):
-        self.name=name
+    def __init__(self,sess,name,layer,trainable=True):
+        self.name=network[0]
         self.sess=sess
-        layers=copy.copy(config.layers)
+        layers=copy.copy(network[1])
         self.trainable=trainable
         with tf.name_scope(name):
             self.state_vector=tf.placeholder(tf.float32,config.vector_dim)
@@ -247,36 +255,37 @@ class Build_AC(object):
     def evaluate(self,feed_dict):
         return self.sess.run(self.out_,feed_dict=feed_dict)    
 
-    def fc(self,in_,layer):
-        return tf.nn.relu(tf.matmul(in_, \
-            self.variables[self.name+'/'+layer+'/w:0'])+ \
-            self.variables[self.name+'/'+layer+'/b:0'])
-    
-    def conv(self,in_,layer):
-        return tf.nn.max_pool(
-            tf.nn.relu(
-                tf.nn.conv2d(
-                    in_,
-                    self.variables[self.name+'/'+layer+'/f:0'],
-                    strides=[1,1,1,1],
-                    padding='SAME')),
-            ksize=[1,2,2,1],
-            strides=[1,2,2,1],
-            padding='SAME')
+def fc(in_,layer):
+    return tf.nn.softplus(tf.matmul(in_, \
+        self.variables[self.name+'/'+layer+'/w:0'])+ \
+        self.variables[self.name+'/'+layer+'/b:0'])
 
-    def create_variable(self,shape,name):
-        with tf.name_scope(name):
-            if len(shape)==2:
-                stddev=1/np.sqrt(shape[0])
-                tf.Variable( \
-                    tf.random_normal(shape,stddev=stddev),name='w',trainable=self.trainable)
-                tf.Variable( \
-                    tf.random_normal([shape[1]],stddev=stddev),name='b',trainable=self.trainable)
-            else:
-                stddev=1/np.sqrt(shape[0]*shape[1]*shape[2])
-                tf.Variable( \
-                    tf.random_normal(shape,stddev=stddev),name='f',trainable=self.trainable)
+def conv(in_,layer):
+    return tf.nn.max_pool(
+        tf.nn.softplus(
+            tf.nn.conv2d(
+                in_,
+                self.variables[self.name+'/'+layer+'/f:0'],
+                strides=[1,1,1,1],
+                padding='SAME')),
+        ksize=[1,2,2,1],
+        strides=[1,2,2,1],
+        padding='SAME')
 
+def create_variable(shape,name,trainable):
+    with tf.name_scope(name):
+        if len(shape)==2:
+            stddev=1/np.sqrt(shape[0])
+            tf.Variable( \
+                tf.random_normal(shape,stddev=stddev),name='w',trainable=trainable)
+            tf.Variable( \
+                tf.random_normal([shape[1]],stddev=stddev),name='b',trainable=trainable)
+        else:
+            stddev=1/np.sqrt(shape[0]*shape[1]*shape[2])
+            tf.Variable( \
+                tf.random_normal(shape,stddev=stddev),name='f',trainable=trainable)
+            tf.Variable( \
+                tf.random_normal(shape[3],stddev=stddev),name='b',trainable=trainable)
 
 def l2_regularizer(vars):
     loss=0
@@ -288,9 +297,9 @@ def gradient_inverter(action_bounds,action_gradients,actions):
     action_dim=len(action_bounds[0])
     pmax=tf.constant(action_bounds[0],dtype=tf.float32)
     pmin=tf.constant(action_bounds[1],dtype=tf.float32)
-    plidar=tf.constant([x-y for x,y in zip(action_bounds[0],action_bounds[1])],dtype=tf.float32)
-    pdiff_max=tf.div(-actions+pmax,plidar)
-    pdiff_min=tf.div(actions-pmin,plidar)
+    prange=tf.constant([x-y for x,y in zip(action_bounds[0],action_bounds[1])],dtype=tf.float32)
+    pdiff_max=tf.div(-actions+pmax,prange)
+    pdiff_min=tf.div(actions-pmin,prange)
     zeros_act_grad_filter=tf.zeros([action_dim])       
     return tf.where( \
         tf.greater(action_gradients,zeros_act_grad_filter), \
