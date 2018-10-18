@@ -19,7 +19,7 @@
         <pose frame=''>2 0 0.2 0 -0 1.57</pose>
         <geometry>
           <mesh>
-            <uri>model://unravel/meshes/model.dae</uri>
+            <uri>file://env_machine/unravel/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -32,7 +32,7 @@
         <pose frame=''>2 0 0.2 0 -0 1.57</pose>
         <geometry>
           <mesh>
-            <uri>model://unravel/meshes/model.dae</uri>
+            <uri>file://env_machine/unravel/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

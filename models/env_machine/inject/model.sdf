@@ -19,7 +19,7 @@
         <pose frame=''>2.5 -1 0.2 0 0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://inject/meshes/model.dae</uri>
+            <uri>file://env_machine/inject/meshes/model.dae</uri>
             <scale>0.3 0.3 0.3</scale>
           </mesh>
         </geometry>
@@ -32,7 +32,7 @@
         <pose frame=''>2.5 -1 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://inject/meshes/model.dae</uri>
+            <uri>file://env_machine/inject/meshes/model.dae</uri>
             <scale>0.3 0.3 0.3</scale>
           </mesh>
         </geometry>

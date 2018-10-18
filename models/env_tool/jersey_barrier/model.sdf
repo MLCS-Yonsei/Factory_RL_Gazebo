@@ -6,7 +6,7 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>model://env_tool/jersey_barrier/meshes/jersey_barrier.dae</uri>
+            <uri>file://env_tool/jersey_barrier/meshes/jersey_barrier.dae</uri>
           </mesh>
         </geometry>
       </visual>

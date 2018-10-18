@@ -19,7 +19,7 @@
         <pose>-3.8 -2.3 0.2 0 -0 0</pose>
         <geometry>
          <mesh>
-            <uri>model://chemical_tank/meshes/model.dae</uri>
+            <uri>file://env_machine/chemical_tank/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -32,7 +32,7 @@
         <pose frame=''>-3.8 -2.3 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://chemical_tank/meshes/model.dae</uri>
+            <uri>file://env_machine/chemical_tank/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

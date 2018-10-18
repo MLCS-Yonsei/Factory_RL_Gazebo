@@ -19,7 +19,7 @@
         <pose frame=''>-1.5 -1.2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://aircompressor/meshes/model.dae</uri>
+            <uri>file://env_machine/aircompressor/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -32,7 +32,7 @@
         <pose frame=''>-1.5 -1.2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://aircompressor/meshes/model.dae</uri>
+            <uri>file://env_machine/aircompressor/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

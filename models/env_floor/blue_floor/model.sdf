@@ -27,8 +27,8 @@
         </geometry>
         <material>
           <script>
-            <uri>model://env_floor/blue_floor/materials/scripts</uri>
-            <uri>model://env_floor/blue_floor/materials/textures</uri>
+            <uri>file://env_floor/blue_floor/materials/scripts</uri>
+            <uri>file://env_floor/blue_floor/materials/textures</uri>
             <name>vrc/blue_floor</name>
           </script>
           <ambient>1 0.764706 0.305882 1</ambient>

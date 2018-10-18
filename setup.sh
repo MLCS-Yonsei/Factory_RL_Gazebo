@@ -26,19 +26,19 @@
 # wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 # sudo apt-get update -y
 # sudo apt-get upgrade -y
-# sudo apt-get install ros-kinetic-desktop-full -y
 # sudo apt-get install libignition-math3 -y
 # sudo apt-get install libgazebo8 -y
 # sudo apt-get install gazebo8 -y
 
 #Alias#
-# alias eb='gedit ~/.bashrc'
-# alias sb='source ~/.bashrc && source ~/catkin_ws/devel/setup.bash'
-# alias cm='cd ~/catkin_ws && catkin_make'
-# alias usb='ls -l /dev |grep ttyUSB'
-# alias gpu='nvidia-smi -l 1'
-# alias kg='killall -9 roscore roslaunch rosmaster gzserver nodelet gzclient rviz'
-# alias fd='sudo find / -name'
+# echo "alias eb='gedit ~/.bashrc'" >>~/.bashrc
+# echo "alias sb='source ~/.bashrc && source ~/catkin_ws/devel/setup.bash'" >>~/.bashrc
+# echo "alias cm='cd ~/catkin_ws && catkin_make'" >>~/.bashrc
+# echo "alias usb='ls -l /dev |grep ttyUSB'" >>~/.bashrc
+# echo "alias gpu='nvidia-smi -l 1'" >>~/.bashrc
+# echo "alias kg='killall -9 roscore roslaunch rosmaster gzserver nodelet gzclient rviz'" >>~/.bashrc
+# echo "alias fd='sudo find / -name'" >>~/.bashrc
+
 
 #Gym gazebo_dependency pkg#
 sudo apt-get install cmake gcc g++ qt4-qmake libqt4-dev libusb-dev libftdi-dev -y
@@ -66,18 +66,8 @@ pip install rospkg catkin_pkg
 #Installation
 pip install -e .
 
-source /opt/ros/kinetic/setup.bash
-
-if [ -z "$GYM_GAZEBO_WORLD" ]; then
-  bash -c 'echo "export GYM_GAZEBO_WORLD="`pwd`/../world/test.world >> ~/.bashrc'
-  exec bash
-fi
-if [ -z "$GAZEBO_MODEL_PATH" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../models >> ~/.bashrc'
-  exec bash
-fi
-source ~/.bashrc
-echo "## Installation complete!! ##"
-
-
-
+#Gazebo mopdel copy
+cd models
+sudo cp -r 'env_floor' 'env_machine' 'env_tool' 'env_wall' '/usr/share/gazebo-8/models'
+cd Actor
+sudo cp 'walk.dae' 'walk1.dae' 'walk2.dae' 'walk3.dae' '/usr/share/gazebo-8/media/models'

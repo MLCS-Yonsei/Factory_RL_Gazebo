@@ -19,7 +19,7 @@
         <pose frame=''>-0.5 1 0.48 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://workbench/meshes/model.dae</uri>
+            <uri>file://env_machine/workbench/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
@@ -32,7 +32,7 @@
         <pose frame=''>-0.5 1 0.48 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://workbench/meshes/model.dae</uri>
+            <uri>file://env_machine/workbench/meshes/model.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
         </geometry>

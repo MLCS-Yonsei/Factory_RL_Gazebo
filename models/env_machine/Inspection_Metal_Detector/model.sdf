@@ -24,7 +24,7 @@
         <pose frame=''>-1 -2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Inspection_Metal_Detector/meshes/model.dae</uri>
+            <uri>file://env_machine/Inspection_Metal_Detector/meshes/model.dae</uri>
             <scale>1.2 1.2 1.2</scale>
           </mesh>
         </geometry>
@@ -37,7 +37,7 @@
         <pose frame=''>-1 -2 0.2 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>model://Inspection_Metal_Detector/meshes/model.dae</uri>
+            <uri>file://env_machine/Inspection_Metal_Detector/meshes/model.dae</uri>
             <scale>1.2 1.2 1.2</scale>
           </mesh>
         </geometry>

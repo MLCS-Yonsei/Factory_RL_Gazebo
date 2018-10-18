@@ -7,7 +7,7 @@ class Settings(object):
         self.load_buffer=True
         self.gpu=True
         self.vector_dim=[None,42]
-        self.rgbd_dim=[None,480,720,7]
+        self.rgbd_dim=[None,120,160,7]
         self.action_dim=3
         self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
         self.gamma=0.9 # discount factor

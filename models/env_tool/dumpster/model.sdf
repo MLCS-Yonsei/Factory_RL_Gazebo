@@ -6,7 +6,7 @@
         <geometry>
           <mesh>
             <scale>1.5 1.5 1.5</scale>
-            <uri>model://env_tool/dumpster/meshes/dumpster.dae</uri>
+            <uri>file://env_tool/dumpster/meshes/dumpster.dae</uri>
           </mesh>
         </geometry>
       </collision>
@@ -14,13 +14,13 @@
         <geometry>
           <mesh>
             <scale>1.5 1.5 1.5</scale>
-            <uri>model://env_tool/dumpster/meshes/dumpster.dae</uri>
+            <uri>file://env_tool/dumpster/meshes/dumpster.dae</uri>
           </mesh>
         </geometry>
         <material>
           <script>
-            <uri>model://env_tool/dumpster/materials/scripts</uri>
-            <uri>model://env_tool/dumpster/materials/textures</uri>
+            <uri>file://env_tool/dumpster/materials/scripts</uri>
+            <uri>file://env_tool/dumpster/materials/textures</uri>
             <name>Dumpster/Diffuse</name>
           </script>
         </material>
