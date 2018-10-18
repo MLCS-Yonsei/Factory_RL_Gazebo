@@ -74,8 +74,8 @@ class ddpgEnv(gazebo_env.GazeboEnv):
             print('Sonar detected')
             print('========================================================')
         #RGB reshape
-        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[120,160,3])
-        depth = np.reshape(np.fromstring(depth.data, np.uint8),[120,160,4])
+        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
+        depth = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
         rgbd = np.concatenate((rgb,depth),axis=2)
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)

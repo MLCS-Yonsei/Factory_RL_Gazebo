@@ -7,13 +7,10 @@ Visit [erlerobotics/gym-gazebo](https://github.com/erlerobot/gym-gazebo) for mor
 ## Dependency ROS package installation
 One-line installation
 ```bash
-cd
 cd catkin_ws/src
-git clone https://github.com/MLCS-Yonsei/mlcs_sim
-cd mlcs_sim
+git clone https://github.com/MLCS-Yonsei/dual_sim.git
+cd dual_sim
 sh setup.sh
-cd ../..
-catkin_make
 ```
 
 ## Main Installation
