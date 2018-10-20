@@ -23,12 +23,19 @@ class SRL:
         self.done=tf.placeholder(tf.float32,[None,1],name='done')
         self.target_q=tf.placeholder(tf.float32,[None,1],name='target_q')
         self.target_state=tf.placeholder(tf.float32,[None]+config.state_dim)
+        out={}
         # observation networks
         for key in config.observation_networks.keys():
             with tf.name_scope(key+'_net'):
                 self.observation[name] = tf.placeholder( \
                         tf.float32,[None]+config.observation_dim[name])
-                create_variable()
+                out[key] = self.observation[key]
+                for idx,(type,layer) in enumerate(config.observation_networks[key]):
+                    create_variable(layer,type+str(idx))
+                    out[key]=
+        
+        self.var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,name)
+        self.variables={var.name:var for var in self.var_list}
         # self.noise=tf.placeholder(tf.float32,[None,config.action_dim])
         # build network
         self.actor_net=Build_AC(self.sess,config,'actor_net')
@@ -272,7 +279,7 @@ def conv(in_,layer):
         strides=[1,2,2,1],
         padding='SAME')
 
-def create_variable(shape,name,trainable):
+def create_variable(shape,name,trainable=True):
     with tf.name_scope(name):
         if len(shape)==2:
             stddev=1/np.sqrt(shape[0])
