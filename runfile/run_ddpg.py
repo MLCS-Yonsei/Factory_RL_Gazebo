@@ -24,12 +24,10 @@ def render():
 if __name__ == '__main__':
 
     env = gym.make('ddpg-v0')
-
-    # env_reset().gazebo_warmup()
-
-    outdir = '/tmp/gazebo_gym_experiments'
-    # env = gym.wrappers.Monitor(env, outdir, force=True)
     env.action_space = 3
+    
+    # outdir = '/tmp/gazebo_gym_experiments'
+    # env = gym.wrappers.Monitor(env, outdir, force=True)
     # plotter = liveplot.LivePlot(outdir)
 
     last_time_steps = numpy.ndarray(0)

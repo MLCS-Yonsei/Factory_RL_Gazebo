@@ -18,7 +18,6 @@ from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from bringup_dual.msg import commendMsg
-from env_reset import env_reset
 
 from rosgraph_msgs.msg import Clock
 import tf
@@ -39,14 +38,12 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
         self._seed()
-        self.min_scan_range = 0.6
-        self.min_sonar_range = 0.6
+        self.min_scan_range = 0.9
+        self.min_sonar_range = 0.3
         self.min_dist_range = 0.3
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
-        self.target = [0.0, 0.0]
-        self.env_reset = env_reset()
-        self.rand_deploy_list = None
+        self.target_set=[[10.0]*2,[5.0]*2]
         
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
         scan_data=[]
@@ -209,14 +206,12 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         return state, reward, done, {}
 
     def reset(self):
-        if self.rand_deploy_list is not None:
-            self.env_reset.rand_move()
- 
-        self.rand_deploy_list = self.env_reset.rand_deploy()
-        
-        self.target = choice(self.rand_deploy_list)
-        
-        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+        rospy.wait_for_service('/gazebo/reset_simulation')
+        try:
+            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.3 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+            print ("Robot position reset")
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/reset_simulation service call failed")
         
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
@@ -266,6 +261,7 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.odom_data_tmp = odom_data
         self.ang_vel_prev = 0
         self.lin_vel_prev = 0
+        self.target=choice(self.target_set)
         print(self.target)
         print(odom_data)
         state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)
