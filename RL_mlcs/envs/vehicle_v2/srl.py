@@ -44,9 +44,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.min_dist_range = 0.1
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
+        self.target_set = []
         self.target = [0.0, 0.0]
-        self.env_reset = env_reset()
-        self.rand_deploy_list = None
+        self.vel_x_prev = 0.0
+        self.vel_y_prev = 0.0
+        self.vel_phi_prev = 0.0
         
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
         scan_data=[]
@@ -74,9 +76,9 @@ class srlEnv(gazebo_env.GazeboEnv):
             print('Sonar detected')
             print('========================================================')
         #RGB reshape
-        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[480,720,3])
-        depth = np.reshape(np.fromstring(depth.data, np.uint8),[480,720,4])
-        rgbd = np.concatenate((rgb,depth),axis=2)
+        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
+        depth_raw = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
+        depth = self.depth_from_raw(depth_raw)
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
         print('========================================================')
@@ -93,8 +95,12 @@ class srlEnv(gazebo_env.GazeboEnv):
         if angle_to_target < -np.pi:
             angle_to_target += 2 * np.pi
         state={}
-        state['vector'] = scan_data+sonar_data+[dist_to_target,angle_to_target]
-        state['rgbd'] = rgbd
+        state['lidar'] = scan_data
+        state['proximity'] = sonar_data
+        state['control'] = [self.vel_x_prev, self.vel_y_prev, self.vel_phi_prev]
+        state['goal'] = [dist_to_target,angle_to_target]
+        state['rgb'] = rgb
+        state['depth'] = depth
         if (self.min_dist_range > dist_to_target):
             done = True
             reward+=10
@@ -114,6 +120,13 @@ class srlEnv(gazebo_env.GazeboEnv):
         odom_data.append(pitch)			# [4]
         odom_data.append(yaw)			# [5]
         return odom_data
+
+    def depth_from_raw(self, raw):
+        depth = np.zeros([96, 128, 1], dtype=np.int32)
+        for idx in range(2):
+            depth += raw[:,:,idx]*256**idx
+        depth += np.fmin(raw[:,:,3]-63, 1)
+        return depth
         
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -187,7 +200,7 @@ class srlEnv(gazebo_env.GazeboEnv):
 
         self.vel_x_prev = action[0]
         self.vel_y_prev = action[1]
-        self.vel_z_prev = action[2]
+        self.vel_phi_prev = action[2]
 
         distance_decrease = (self.state_prev['vector'][-2] - state['vector'][-2]) * 5.0
         reward += distance_decrease
@@ -209,14 +222,13 @@ class srlEnv(gazebo_env.GazeboEnv):
         return state, reward, done, {}
 
     def reset(self):
-        if self.rand_deploy_list is not None:
-            self.env_reset.rand_move()
- 
-        self.rand_deploy_list = self.env_reset.rand_deploy()
         
-        self.target = choice(self.rand_deploy_list)
-        
-        subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.4 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+        rospy.wait_for_service('/gazebo/reset_simulation')
+        try:
+            subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.3 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
+            print ("Robot position reset")
+        except (rospy.ServiceException) as e:
+            print ("/gazebo/reset_simulation service call failed")
         
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
@@ -264,8 +276,9 @@ class srlEnv(gazebo_env.GazeboEnv):
                 pass
         odom_data = self.odom_to_data(odom)
         self.odom_data_tmp = odom_data
-        self.ang_vel_prev = 0
-        self.lin_vel_prev = 0
+        self.vel_x_prev = 0.0
+        self.vel_y_prev = 0.0
+        self.vel_phi_prev = 0.0
         print(self.target)
         print(odom_data)
         state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)

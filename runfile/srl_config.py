@@ -24,7 +24,8 @@ class Settings(object):
             'lidar':[36],
             'proximity':[4],
             'control':[3],
-            'depth':[96,128,3]
+            'depth':[96,128,3],
+            'goal':[2]
         }
         self.state_dim=[50]
         self.action_dim=[3]        
@@ -36,7 +37,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.lidar_dim[0],200]
+                    'shape':[self.observation_dim['lidar'][0],200]
                 },
                 {
                     'type':'dense',
@@ -48,7 +49,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.proximity_dim[0],200]
+                    'shape':[self.observation_dim['proximity'][0],200]
                 },
                 {
                     'type':'dense',
@@ -60,7 +61,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.control_dim[0],200]
+                    'shape':[self.observation_dim['control'][0],200]
                 },
                 {
                     'type':'dense',
@@ -72,7 +73,7 @@ class Settings(object):
                 {
                     'type':'conv2d',
                     'activation':'softplus',
-                    'shape':[5,5,self.rgbd_dim[3],8],
+                    'shape':[5,5,self.observation_dim['depth'][3],8],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
@@ -93,6 +94,13 @@ class Settings(object):
                 {
                     'type':'flatten',
                     'shape':[-1,self.state_dim[0]]
+                }
+            ],
+            'goal':[
+                {
+                    'type':'dense',
+                    'activation':'None',
+                    'shape':[self.observation_dim['goal'][0],3]
                 }
             ]
         }
@@ -118,7 +126,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[100,self.state_dim[0]
+                    'shape':[100,self.state_dim[0]]
                 }
             ]
         }
@@ -145,7 +153,7 @@ class Settings(object):
                     'type':'dense',
                     'activation':'softplus',
                     'shape':[40+self.action_dim[0],30]
-                }
+                },
                 {
                     'type':'dense',
                     'activation':'None',
