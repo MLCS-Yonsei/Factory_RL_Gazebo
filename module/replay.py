@@ -7,7 +7,7 @@ class Replay(object):
         self.batch_size=batch_size
         self.currentPosition=-1
         if not observations:
-            observations=['vector0','rgbd0']
+            observations=['vector','rgbd']
         self.bufferkeys=[key+'0' for key in observations]+ \
                         [key+'1' for key in observations]+ \
                         ['action0','reward','done']
@@ -19,7 +19,7 @@ class Replay(object):
         if self.buffersize>self.batch_size:
             indices=random.choice(range(self.buffersize),self.batch_size,replace=False)
             Batch={key:[] for key in self.buffer.keys()}
-            for key in self.buffer.keys():
+            for name in self.buffer.keys():
                 for idx in indices:
                     Batch[name].append(self.buffer[name][idx])
             return Batch
