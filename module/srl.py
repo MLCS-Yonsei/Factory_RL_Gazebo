@@ -55,6 +55,9 @@ class SRL:
                                 trainable=trainable
                             )
 
+                var_list[name] = \
+                    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)
+
         self.state = 0.0
         for key in config.observation_networks.keys():
             self.state = tf.add(self.state,self.obs[key])
@@ -86,7 +89,8 @@ class SRL:
                                 if trainable:
                                     self.noise_dim = layer['shape']
 
-        var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)
+                var_list[name] = \
+                    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)
         self.variables = {var.name:var for var in var_list}
         
         # prediction networks
@@ -103,13 +107,21 @@ class SRL:
                         )
 
         # state representation loss
-        fwd_loss = tf.reduce_sum(tf.pow(tf.subtract(self.pred['state'], self.target_state), 2))
+        fwd_loss = tf.reduce_mean(
+            tf.reduce_sum(
+                tf.pow(
+                    tf.subtract(self.pred['state'], self.target_state),
+                    2
+                ),
+                axis=1
+            )
+        )
 
         # reinforcement learning loss
         y = self.reward\
             +tf.multiply(self.gamma, tf.multiply(self.target_q, 1.0-self.done))
         q_loss = \
-            tf.reduce_sum(tf.pow(self.rl['critic']-y, 2))/config.batch_size\
+            tf.reduce_mean(tf.pow(self.rl['critic']-y, 2))\
             +config.l2_penalty*_l2_loss(self.critic_net.var_list)
 
         # update critic
