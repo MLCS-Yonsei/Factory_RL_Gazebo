@@ -41,19 +41,19 @@ class SRL:
         with tf.name_scope(group):
             for key in config.observation_networks.keys():
                 for name in [key, key+'_target']:
-                with tf.name_scope(name):
-                    self.obs[name] = tf.placeholder(
-                        tf.float32,
-                        [None]+config.observation_dim[key],
-                        name='in'
-                    )
-                    for idx, layer in enumerate(config.observation_networks[key]):
-                        self.obs[name] = \
-                            _create_layer(
-                                self.obs[name],
-                                layer,
-                                str(idx)+':'+layer['type'],
-                            )
+                    with tf.name_scope(name):
+                        self.obs[name] = tf.placeholder(
+                            tf.float32,
+                            [None]+config.observation_dim[key],
+                            name='in'
+                        )
+                        for idx, layer in enumerate(config.observation_networks[key]):
+                            self.obs[name] = \
+                                _create_layer(
+                                    self.obs[name],
+                                    layer,
+                                    str(idx)+':'+layer['type'],
+                                )
 
                     self.var_list[name] = \
                         tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)

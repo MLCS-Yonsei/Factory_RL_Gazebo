@@ -37,10 +37,10 @@ if __name__ == '__main__':
 
     memory = replay.Replay(config.max_buffer, \
                            config.batch_size, \
-                           observations='lidar','rgbd','proximity','control'])
+                           observations=config.observation_dim.keys())
     if config.load_buffer:
         try:
-            memory.buffer=numpy.load('buffer.npy').item()
+            memory.buffer=numpy.load('srl_buffer.npy').item()
         except:
             pass
 
@@ -70,20 +70,20 @@ if __name__ == '__main__':
             state1,reward,done,info = env.step(action)
             # print('action:',action,'  Done:',done)
             experience={
-                'lidar0':state0['lidar'],
-                'rgbd0':state0['rgbd'],
-                'proximity0':state0['proximity'],
-                'control0':state0['control'],
-                'lidar1':state1['lidar'],
-                'rgbd1':state1['rgbd'],
-                'proximity1':state1['proximity'],
-                'control1':state1['control'],
-                'action0':action,
+                'lidar_0':state0['lidar'],
+                'rgbd_0':state0['rgbd'],
+                'proximity_0':state0['proximity'],
+                'control_0':state0['control'],
+                'lidar_1':state1['lidar'],
+                'rgbd_1':state1['rgbd'],
+                'proximity_1':state1['proximity'],
+                'control_1':state1['control'],
+                'action':action,
                 'reward':reward,
                 'done':done
             }
             memory.add(experience)
-            numpy.save('buffer.npy',memory.buffer)
+            numpy.save('srl_buffer.npy',memory.buffer)
 
             cumulated_reward += reward
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
         if x%100==0:
             # plotter.plot(env)
-            numpy.save('weights.npy',srl.return_variables())
+            numpy.save('srl_weights.npy',srl.return_variables())
         
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
