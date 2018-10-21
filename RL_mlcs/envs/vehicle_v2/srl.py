@@ -30,7 +30,7 @@ class srlEnv(gazebo_env.GazeboEnv):
     def __init__(self):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
-        self.vel_pub = rospy.Publisher('/ns1/cmd_msg', commendMsg, queue_size=5)
+        self.cmd_pub = rospy.Publisher('/ns1/cmd_msg', commendMsg, queue_size=5)
         self.odom_pub = rospy.Publisher('/pose', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
@@ -39,12 +39,26 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
         self._seed()
-        self.min_scan_range = 0.6
-        self.min_sonar_range = 0.6
+        self.min_scan_range = 0.5
+        self.min_sonar_range = 0.1
         self.min_dist_range = 0.1
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
-        self.target_set = []
+        self.target_set=[
+            [ 17.5,-4.5],
+            [ 17.5, 0.5],
+            [ 12.5, 0.5],
+            [  7.5,-4.5],
+            [  7.5, 0.5],
+            [  2.5,-4.5],
+            [ -2.5,-4.5],
+            [ -2.5, 0.5],
+            [ -2.5, 5.5],
+            [ -7.5, 5.5],
+            [-12.5, 0.5],
+            [-17.5,-4.5],
+            [-17.5, 0.5]
+        ]
         self.target = [0.0, 0.0]
         self.vel_x_prev = 0.0
         self.vel_y_prev = 0.0
@@ -145,7 +159,7 @@ class srlEnv(gazebo_env.GazeboEnv):
         pose_cmd.xd = action[0]
         pose_cmd.yd = action[1]
         pose_cmd.phid = action[2]
-        self.vel_pub.publish(pose_cmd)
+        self.cmd_pub.publish(pose_cmd)
         
         time = None
         while time is None:
@@ -191,6 +205,8 @@ class srlEnv(gazebo_env.GazeboEnv):
                 depth =  rospy.wait_for_message('/kinect_depth_camera/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
+        
+
 
         odom_data = self.odom_to_data(odom)
         odom_data_tmp = odom_data
@@ -209,7 +225,7 @@ class srlEnv(gazebo_env.GazeboEnv):
             pose_cmd.xd = 0.0
             pose_cmd.yd = 0.0
             pose_cmd.phid = 0.0
-            self.vel_pub.publish(pose_cmd)
+            self.cmd_pub.publish(pose_cmd)
             self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
 
@@ -240,11 +256,12 @@ class srlEnv(gazebo_env.GazeboEnv):
         pose_cmd.xd = 0.0
         pose_cmd.yd = 0.0
         pose_cmd.phid = 0.0
-        self.vel_pub.publish(pose_cmd)
+        self.cmd_pub.publish(pose_cmd)
         odom = None
         while odom is None:
             try:
-                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+                # odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
+                odom = rospy.wait_for_message('/pose', Odometry, timeout=5).pose.pose
             except:
                 pass
         scan = None

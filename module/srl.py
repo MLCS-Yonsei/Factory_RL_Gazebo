@@ -95,7 +95,7 @@ class SRL:
                                 )
                                 if layer['type'] =='decision':
                                     self.noise_key[name] = \
-                                        name+'/'+str(idx)+':decision/noise:0'
+                                        'rl/'+name+'/'+str(idx)+':decision/noise:0'
                                     if trainable:
                                         self.noise_dim = layer['shape']
 
@@ -132,22 +132,49 @@ class SRL:
         # state representation loss
         rew_loss = tf.reduce_mean(
             tf.pow(
-                tf.subtract(self.pred['reward'], self.target_reward),
+                tf.subtract(self.pred['reward'], self.reward),
                 2
             )
         )
         fwd_loss = tf.reduce_mean(
             tf.reduce_sum(
                 tf.pow(
-                    tf.subtract(self.pred['state'], self.target_state),
+                    tf.subtract(self.pred['state'], self.state_target),
                     2
                 ),
                 axis=1
             )
         )
         inv_loss = None # impossible to solve on continuous domain
-        slow_loss = None
-        div_loss = None
+        slow_loss = tf.reduce_mean(
+            tf.reduce_sum(
+                tf.pow(
+                    tf.subtract(self.state, self.state_target),
+                    2
+                ),
+                axis=1
+            )
+        )
+        div_loss = tf.reduce_mean(
+            tf.exp(
+                -tf.reduce_sum(
+                    tf.pow(
+                        tf.subtract(
+                            self.state,
+                            tf.reduce_mean(self.state, axis=0)
+                        ),
+                        2
+                    ),
+                    axis=1
+                )
+            )
+        )
+        srl_loss = config.c_srl*(
+            config.c_rew*rew_loss+\
+            config.c_slow*slow_loss+\
+            config.c_div*div_loss+\
+            config.c_fwd*fwd_loss
+        )
 
         # reinforcement learning loss
         y = self.reward\
@@ -156,6 +183,17 @@ class SRL:
             tf.reduce_mean(tf.pow(self.rl['critic']-y, 2))\
             +config.l2_penalty*_l2_loss(self.critic_net.var_list)
 
+        # update all
+        self.update_all = \
+            tf.train.AdamOptimizer(learning_rate = config.critic_learning_rate)\
+                .minimize(
+                    q_loss+srl_loss,
+                    var_list = \
+                        self.var_list['obs']+\
+                        self.var_list['critic']+\
+                        self.var_list['pred']
+                )
+
         # update critic
         self.update_critic = \
             tf.train.AdamOptimizer(learning_rate = config.critic_learning_rate)\
@@ -163,7 +201,16 @@ class SRL:
                     q_loss,
                     var_list = \
                         self.var_list['obs']+\
-                        self.var_list['critic']+\
+                        self.var_list['critic']
+                )
+
+        # update srl
+        self.update_srl = \
+            tf.train.AdamOptimizer(learning_rate = config.srl_learning_rate)\
+                .minimize(
+                    srl_loss,
+                    var_list = \
+                        self.var_list['obs']+\
                         self.var_list['pred']
                 )
 
@@ -219,7 +266,7 @@ class SRL:
 
         fd = {}
         for key in self.observation_dim:
-            fd['obs'+key+'/in:0'] = \
+            fd['obs/'+key+'_target/in:0'] = \
                 np.reshape(batch[key+'_1'], [1]+self.observation_dim[key])
         fd[self.noise_key['actor_target']] = np.zeros(self.noise_dim)
 
@@ -229,18 +276,16 @@ class SRL:
 
         target_q = self.sess.run(self.rl['critic_target'], feed_dict=fd)
 
-        fd = {}
         for key in self.observation_dim:
-            fd[key+'/in:0'] = \
+            fd['obs/'+key+'/in:0'] = \
                 np.reshape(batch[key+'_0'], [1]+self.observation_dim[key])
         fd[self.noise_key['actor']] = np.zeros(self.noise_dim)
         fd[self.action] = np.reshape(batch['action'], self.action_dim)
         fd[self.target_q] = target_q
-        fd[self.target_state]
         fd[self.reward] = np.reshape(batch['reward'], [-1, 1])
         fd[self.done] = np.reshape(batch['done'], [-1, 1])
 
-        self.sess.run([self.update_critic, self.update_actor], feed_dict=fd)
+        self.sess.run([self.update_all, self.update_actor], feed_dict=fd)
 
         self.sess.run(self.assign_target_soft)
 
@@ -252,85 +297,16 @@ class SRL:
     
     def load(self, saved_variables):
 
-        self.sess.run( \
-            [self.actor_net.variables[var].assign(saved_variables[var]) \
-                for var in self.actor_net.variables.keys()]+ \
-            [self.critic_net.variables[var].assign(saved_variables[var]) \
-                for var in self.critic_net.variables.keys()]+ \
-            self.assign_target)
+        self.sess.run(
+            [self.vars[var].assign(saved_variables[var]) for var in self.vars.keys()]
+        )
+        self.sess.run(self.assign_target)
 
     
     def return_variables(self):
 
-        return dict({name:self.sess.run(name) \
-                    for name in self.actor_net.variables.keys()},  \
-               **{name:self.sess.run(name) \
-                    for name in self.critic_net.variables.keys()})
+        return self.vars
 
-
-
-class Build_AC(object):
-
-    def __init__(self, sess, layers, name, *args):
-        self.name = name
-        self.sess = sess
-        layers = copy.copy(config.layers)
-        self.trainable = False if name.split('_')[1] == 'target' else True
-        with tf.name_scope(name):
-            self.state_vector = tf.placeholder(tf.float32, config.vector_dim)
-            self.state_rgbd = tf.placeholder(tf.float32, config.rgbd_dim)
-            layers['merge'][0][0] =  \
-                    layers['rgbd'][-1][-1]* \
-                    config.rgbd_dim[1]* \
-                    config.rgbd_dim[2]/ \
-                    2**(2*len(layers['rgbd']))+ \
-                    layers['vector'][-1][-1]
-            if name[0] == 'a':
-                # config.action_dim = len(config.action_bounds[0])
-                self.a_scale = tf.subtract(
-                    config.action_bounds[0], config.action_bounds[1])/2.0
-                self.a_mean = tf.add(
-                    config.action_bounds[0], config.action_bounds[1])/2.0
-            else:
-                layers['merge'][0][0] += config.action_dim
-                self.action = tf.placeholder(tf.float32, [None, config.action_dim])
-            for item in layers.keys():
-                for idx, shape in enumerate(layers[item]):
-                    self.create_variable(shape, item+str(idx))
-            if name[0] == 'c':
-                self.create_variable([layers['merge'][-1][-1], 1], 'output')
-            else:
-                self.create_variable([layers['merge'][-1][-1], config.action_dim], 'output')
-            self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, name)
-            self.variables = {var.name:var for var in self.var_list}
-            out_vector = self.state_vector
-            for layer in range(len(layers['vector'])):
-                out_vector = self.fc(out_vector, 'vector'+str(layer))
-            out_rgbd = self.state_rgbd
-            for layer in range(len(layers['rgbd'])):
-                out_rgbd = self.conv(out_rgbd, 'rgbd'+str(layer))
-            out_rgbd = tf.reshape(out_rgbd,  \
-                [
-                    -1, 
-                    layers['rgbd'][-1][-1]* \
-                    config.rgbd_dim[1]* \
-                    config.rgbd_dim[2]/ \
-                    2**(2*len(layers['rgbd']))
-                ])
-            out_ = tf.concat([out_vector, out_rgbd], 1)
-            if name[0] == 'c':
-                out_ = tf.concat([out_, self.action], 1)
-            for layer in range(len(layers['merge'])):
-                out_ = self.fc(out_, 'merge'+str(layer))
-            out_ = tf.matmul(out_, self.variables[self.name+'/output/w:0'])
-            if name.split('_')[0] == 'actor':
-                self.out_before_activation = out_
-                self.out_ = tf.multiply(tf.tanh(out_), self.a_scale)+self.a_mean
-            else:
-                self.out_ = out_
-
-    def evaluate(self, feed_dict):
-        return self.sess.run(self.out_, feed_dict = feed_dict)    
 
 
 def _create_layer(in_, layer, name, trainable=True, eps=None):
@@ -465,6 +441,7 @@ def _l2_loss(vars):
     for var in vars:
         loss += tf.reduce_sum(tf.pow(var, 2))
     return loss/2.0
+
 
 def _gradient_inverter(action_bounds, action_gradients, actions):
     action_dim = len(action_bounds[0])

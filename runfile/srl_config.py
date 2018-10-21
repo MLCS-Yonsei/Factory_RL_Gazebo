@@ -31,6 +31,15 @@ class Settings(object):
         self.action_dim=[3]        
         self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
 
+        # loss
+        self.c_srl = 0.25
+        self.c_rew = 0.5
+        self.c_slow = 1.0
+        self.c_div = 1.0
+        self.c_inv = 0.5
+        self.c_fwd = 1.0
+
+
         # layer setup
         self.observation_networks={
             'lidar':[
