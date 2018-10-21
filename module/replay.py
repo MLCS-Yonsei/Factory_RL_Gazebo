@@ -8,9 +8,9 @@ class Replay(object):
         self.currentPosition=-1
         if not observations:
             observations=['vector','rgbd']
-        self.bufferkeys=[key+'0' for key in observations]+ \
-                        [key+'1' for key in observations]+ \
-                        ['action0','reward','done']
+        self.bufferkeys=[key+'_0' for key in observations]+ \
+                        [key+'_1' for key in observations]+ \
+                        ['action','reward','done']
         self.buffer={key:[] for key in self.bufferkeys}
         self.buffersize=0
         self.max=False

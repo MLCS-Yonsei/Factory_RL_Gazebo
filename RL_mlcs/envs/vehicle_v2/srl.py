@@ -77,8 +77,7 @@ class srlEnv(gazebo_env.GazeboEnv):
             print('========================================================')
         #RGB reshape
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
-        depth_raw = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
-        depth = self.depth_from_raw(depth_raw)
+        depth = self.depth_from_raw(np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4]))
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
         print('========================================================')
@@ -122,11 +121,12 @@ class srlEnv(gazebo_env.GazeboEnv):
         return odom_data
 
     def depth_from_raw(self, raw):
-        depth = np.zeros([96, 128, 1], dtype=np.int32)
+        depth = np.zeros([96, 128, 1], dtype=np.float32)
         for idx in range(2):
-            depth += raw[:,:,idx]*256**idx
-        depth += np.fmin(raw[:,:,3]-63, 1)
-        return depth
+            depth += raw[:,:,idx].astype(np.float32)*256**idx
+        depth += np.fmin(raw[:,:,3].astype(np.float32)-63.0, 1.0)
+        depth /= 2.0**17
+        return depth.astype(np.uint8)
         
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)

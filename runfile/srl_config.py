@@ -135,29 +135,35 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.state_dim[0],40]
+                    'shape':[self.state_dim[0],50]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[40,self.action_dim[0]]
+                    'shape':[50,40]
+                },
+                {
+                    'type':'decision',
+                    'shape':[40,self.action_dim[0]],
+                    'bounds':self.action_bounds,
+                    'epsilon':self.epsilon
                 }
             ],
             'critic':[
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.state_dim[0],40]
+                    'shape':[self.state_dim[0]+self.action_dim,60]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[40+self.action_dim[0],30]
+                    'shape':[60,40]
                 },
                 {
                     'type':'dense',
                     'activation':'None',
-                    'shape':[30,1]
+                    'shape':[40,1]
                 }
             ]
         }
