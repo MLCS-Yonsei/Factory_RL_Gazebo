@@ -83,11 +83,11 @@ class DDPG:
         return np.reshape(action,[self.action_dim])
 
     def learn(self,batch):
-        vector0=np.reshape(batch['vector0'],self.vector_dim)
-        rgbd0=np.reshape(batch['rgbd0'],self.rgbd_dim)
-        vector1=np.reshape(batch['vector1'],self.vector_dim)
-        rgbd1=np.reshape(batch['rgbd1'],self.rgbd_dim)
-        action0=np.reshape(batch['action0'],[-1,self.action_dim])
+        vector0=np.reshape(batch['vector_0'],self.vector_dim)
+        rgbd0=np.reshape(batch['rgbd_0'],self.rgbd_dim)
+        vector1=np.reshape(batch['vector_1'],self.vector_dim)
+        rgbd1=np.reshape(batch['rgbd_1'],self.rgbd_dim)
+        action0=np.reshape(batch['action'],[-1,self.action_dim])
         reward=np.reshape(batch['reward'],[-1,1])
         done=np.reshape(batch['done'],[-1,1])
         target_action=self.actor_target.evaluate(vector1,rgbd1)
