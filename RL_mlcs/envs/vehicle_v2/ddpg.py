@@ -43,7 +43,7 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.min_dist_range = 0.3
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
-        self.target_set=[[10.0]*2,[5.0]*2]
+        self.target_set=[[17.5,-4.5],[17.5,0.5],[12.5,0.5],[7.5,-4.5],[7.5,0.5],[2.5,-4.5],[-2.5,-4.5],[-2.5,0.5],[-2.5,5.5],[-7.5,5.5],[-12.5,0.5],[-17.5,-4.5],[-17.5,0.5]]
         
     def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
         scan_data=[]

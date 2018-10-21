@@ -4,7 +4,7 @@
   <arg name="paused" default="false"/>
   <arg name="use_sim_time" default="false"/>
   <arg name="gui" default="true"/>
-  <arg name="world_name" default="$(find bringup_dual)/worlds/cafe.world" />
+  <arg name="world_name" default="$(find bringup_dual)/worlds/fixed_world.world" />
   <arg name="init_pos_x" default="0.0"/>
   <arg name="init_pos_y" default="0.0"/>
   <arg name="init_pos_z" default="0.2"/>
