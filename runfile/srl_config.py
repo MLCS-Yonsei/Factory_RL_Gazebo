@@ -105,7 +105,7 @@ class Settings(object):
             ]
         }
         self.prediction_networks={
-            'reward_prediction':[
+            'reward':[
                 {
                     'type':'dense',
                     'activation':'softplus',
@@ -117,7 +117,7 @@ class Settings(object):
                     'shape':[60,1]
                 }
             ],
-            'state_prediction':[
+            'state':[
                 {
                     'type':'dense',
                     'activation':'softplus',

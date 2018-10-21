@@ -37,76 +37,105 @@ class SRL:
 
         # observation networks
         self.obs = {}
-        for key in config.observation_networks.keys():
-            for name in [key, key+'_target']:
-                with tf.name_scope(key):
+        group = 'obs'
+        with tf.name_scope(group):
+            for key in config.observation_networks.keys():
+                for name in [key, key+'_target']:
+                with tf.name_scope(name):
                     self.obs[name] = tf.placeholder(
                         tf.float32,
                         [None]+config.observation_dim[key],
                         name='in'
                     )
-                    trainable = False if name.split('_')[-1] == 'target' else True
                     for idx, layer in enumerate(config.observation_networks[key]):
                         self.obs[name] = \
                             _create_layer(
                                 self.obs[name],
                                 layer,
                                 str(idx)+':'+layer['type'],
-                                trainable=trainable
                             )
 
-                var_list[name] = \
-                    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)
+                    self.var_list[name] = \
+                        tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+            self.var_list[group] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group)
 
+        # merge features to state
         self.state = 0.0
+        self.state_target = 0.0
         for key in config.observation_networks.keys():
-            self.state = tf.add(self.state,self.obs[key])
-        self.state = tf.divide(state, len(config.observation_networks), name='state')
+            self.state = tf.add(self.state, self.obs[key])
+            self.state_target = tf.add(self.state_target, self.obs[key+'_target'])
+        self.state = tf.divide(self.state, len(config.observation_networks), name='state')
+        self.state_target = tf.divide(
+            self.state_target, len(config.observation_networks), name='state_target')
 
         # reinforcement learnign networks
         self.rl = {}
         self.noise_key = {}
         self.noise_dim = {}
-        for key in config.rl_networks.keys():
-            for name in [key, key+'_target']:
-                with tf.name_scope(name):
-                    if key =='actor':
-                        self.rl[name] = self.state
-                    else:
-                        self.rl[name] = tf.concat([self.state, self.action], axis=1)
-                    trainable = False if name.split('_')[-1] == 'target' else True
-                    for idx, layer in enumerate(config.rl_networks[key]):
-                        self.rl[name] = \
-                            _create_layer(
-                                self.rl[name],
-                                layer,
-                                str(idx)+':'+layer['type'],
-                                trainable=trainable
-                            )
-                            if layer['type'] =='decision':
-                                self.noise_key[name] = \
-                                    name+'/'+str(idx)+':decision/noise:0'
-                                if trainable:
-                                    self.noise_dim = layer['shape']
+        group = 'rl'
+        with tf.name_scope(group):
+            for key in config.rl_networks.keys():
+                for name in [key, key+'_target']:
+                    with tf.name_scope(name):
+                        if key =='actor':
+                            self.rl[name] = \
+                                self.state if name.split('_')[-1] else self.state_target
+                        else:
+                            self.rl[name] = tf.concat([self.state, self.action], axis=1)
+                        trainable = False if name.split('_')[-1] == 'target' else True
+                        for idx, layer in enumerate(config.rl_networks[key]):
+                            self.rl[name] = \
+                                _create_layer(
+                                    self.rl[name],
+                                    layer,
+                                    str(idx)+':'+layer['type'],
+                                    trainable=trainable
+                                )
+                                if layer['type'] =='decision':
+                                    self.noise_key[name] = \
+                                        name+'/'+str(idx)+':decision/noise:0'
+                                    if trainable:
+                                        self.noise_dim = layer['shape']
 
-                var_list[name] = \
-                    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=name)
-        self.variables = {var.name:var for var in var_list}
+                    self.var_list[name] = \
+                        tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+            self.var_list[group] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group)
+        self.vars_for_copy = {var.nam:var for var in self.var_list['rl']+self.var_list['obs']}
         
         # prediction networks
         self.pred = {}
-        for key in config.prediction_networks.keys():
-            with tf.name_scope(key):
-                self.pred[key] = tf.concat([self.state, self.action], axis=1)
-                for idx, layer in enumerate(config.prediction_networks[key]):
-                    self.pred[key] = \
-                        _create_layer(
-                            self.pred[key],
-                            layer,
-                            str(idx)+':'+layer['type']
-                        )
+        group = 'pred'
+        with tf.name_scope(group):
+            for key in config.prediction_networks.keys():
+                with tf.name_scope(key):
+                    self.pred[key] = tf.concat([self.state, self.action], axis=1)
+                    for idx, layer in enumerate(config.prediction_networks[key]):
+                        self.pred[key] = \
+                            _create_layer(
+                                self.pred[key],
+                                layer,
+                                str(idx)+':'+layer['type']
+                            )
+
+                self.var_list[key] = \
+                    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+key)
+            self.var_list[group] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group)
+
+        self.var_list['graph'] = \
+            tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+        self.vars = {var.name:var for var in var_list['graph']}
 
         # state representation loss
+        rew_loss = tf.reduce_mean(
+            tf.pow(
+                tf.subtract(self.pred['reward'], self.target_reward),
+                2
+            )
+        )
         fwd_loss = tf.reduce_mean(
             tf.reduce_sum(
                 tf.pow(
@@ -116,6 +145,9 @@ class SRL:
                 axis=1
             )
         )
+        inv_loss = None # impossible to solve on continuous domain
+        slow_loss = None
+        div_loss = None
 
         # reinforcement learning loss
         y = self.reward\
@@ -127,7 +159,13 @@ class SRL:
         # update critic
         self.update_critic = \
             tf.train.AdamOptimizer(learning_rate = config.critic_learning_rate)\
-                .minimize(q_loss, var_list = self.critic_net.var_list)
+                .minimize(
+                    q_loss,
+                    var_list = \
+                        self.var_list['obs']+\
+                        self.var_list['critic']+\
+                        self.var_list['pred']
+                )
 
         # update actor
         act_grad_v = tf.gradients(self.rl['critic'], self.action)
@@ -138,25 +176,20 @@ class SRL:
             self.rl['actor'], self.actor_net.var_list, -del_Q_a)
         self.update_actor = tf.train.AdamOptimizer( \
             learning_rate = config.actor_learning_rate) \
-            .apply_gradients(zip(parameters_gradients, self.actor_net.var_list))
+            .apply_gradients(zip(parameters_gradients, self.var_list['actor']))
 
         # target copy
-        self.assign_target = \
-            [self.actor_target.variables[var].assign(
-                self.actor_net.variables[var.replace('_target', '')]
-            ) for var in self.actor_target.variables.keys()]+\
-            [self.critic_target.variables[var].assign( \
-                self.critic_net.variables[var.replace('_target', '')]
-            ) for var in self.critic_target.variables.keys()]
-        self.assign_target_soft = \
-            [self.actor_target.variables[var].assign(
-                config.tau*self.actor_net.variables[var.replace('_target', '')]\
-                +(1-config.tau)*self.actor_target.variables[var]
-            ) for var in self.actor_target.variables.keys()]+\
-            [self.critic_target.variables[var].assign( \
-                config.tau*self.critic_net.variables[var.replace('_target', '')]\
-                +(1-config.tau)*self.critic_target.variables[var]
-            ) for var in self.critic_target.variables.keys()]
+        self.assign_target = [
+            self.vars_for_copy[var].assign(
+                self.vars_for_copy[var.replace('_target', '')]
+            ) for var in self.actor_target.variables.keys()
+        ]
+        self.assign_target_soft = [
+            self.vars_for_copy[var].assign(
+                config.tau*self.vars_for_copy[var.replace('_target', '')]\
+                +(1-config.tau)*self.vars_for_copy[var]
+            ) for var in self.actor_target.variables.keys()
+        ]
 
         # initialize variables
         self.var_init = tf.global_variables_initializer()
@@ -186,7 +219,7 @@ class SRL:
 
         fd = {}
         for key in self.observation_dim:
-            fd[key+'/in:0'] = \
+            fd['obs'+key+'/in:0'] = \
                 np.reshape(batch[key+'_1'], [1]+self.observation_dim[key])
         fd[self.noise_key['actor_target']] = np.zeros(self.noise_dim)
 
