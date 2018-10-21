@@ -351,9 +351,9 @@ def _create_layer(in_, layer, name, trainable=True, eps=None):
                     )
                 )
                 out_ = _activation(layer['activation'], out_)
-        elif layer['type'] == 'conv2d':
+        elif layer['type'] == 'conv':
             stddev = 1/np.sqrt(layer['shape'][0]*layer['shape'][1]*layer['shape'][2])
-            with tf.name_scope('conv2d'):
+            with tf.name_scope('conv'):
                 out_ = tf.nn.conv2d(
                     in_, 
                     tf.Variable(

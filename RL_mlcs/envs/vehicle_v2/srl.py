@@ -63,26 +63,32 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.vel_x_prev = 0.0
         self.vel_y_prev = 0.0
         self.vel_phi_prev = 0.0
+        self.scan_buffer = {'-2':None, '-1':None}
+        self.depth_buffer = {'-2':None, '-1':None}
         
-    def calculate_observation(self,scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data):
-        scan_data=[]
+    def calculate_observation(self,odom_data,action):
+        scan_data = []
         sonar_data = []
         done = False
-        reward=0
+        reward = -action[2]**2
         #Scan normalize by dividing by 10
-        for i, item in enumerate(scan.ranges):
+        for i, item in enumerate(self.scan.ranges):
             if i % 10 == 0:
                 scan_data.append(min(scan.ranges[i:i+9]))
             if (self.min_scan_range > item > 0):
                 done = True
                 reward-=10
+        scan_data = np.reshape(scan_data,[-1,1,1])
         if done:
             print('LiDAR detected')
+        if self.scan_buffer['-2'] == None:
+            self.scan_buffer['-2'] = scan_data
+            self.scan_buffer['-1'] = scan_data
 
         #Sonar unifier
-        for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
-            sonar_data.append(item.range)
-            if (self.min_sonar_range > item.range > 0):
+        for key in self.sonar.keys():
+            sonar_data.append(self.sonar[key].range)
+            if (self.min_sonar_range > self.sonar[key].range > 0):
                 done = True
                 reward-=10  
         if done:
@@ -90,10 +96,15 @@ class srlEnv(gazebo_env.GazeboEnv):
             print('Sonar detected')
             print('========================================================')
         #RGB reshape
-        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
-        depth = self.depth_from_raw(np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4]))
+        rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
+        depth = self.depth_from_raw(np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4]))
+        if self.depth_buffer['-2'] == None:
+            self.depth_buffer['-2'] = depth
+            self.depth_buffer['-1'] = depth
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
+        reward += 5*(self.dist_to_target_prev - dist_to_target)
+        self.dist_to_target_prev = dist_to_target
         print('========================================================')
         print('Target pose')
         print(self.target)
@@ -108,12 +119,16 @@ class srlEnv(gazebo_env.GazeboEnv):
         if angle_to_target < -np.pi:
             angle_to_target += 2 * np.pi
         state={}
-        state['lidar'] = scan_data
+        state['lidar'] = np.concatenate([scan_data,self.scan_buffer['-1'],self.scan_buffer['-2']],axis=2)
         state['proximity'] = sonar_data
         state['control'] = [self.vel_x_prev, self.vel_y_prev, self.vel_phi_prev]
         state['goal'] = [dist_to_target,angle_to_target]
         state['rgb'] = rgb
-        state['depth'] = depth
+        state['depth'] = np.concatenate([depth,self.depth_buffer['-1'],self.depth_buffer['-2']],axis=2)
+        self.scan_buffer['-2'] = self.scan_buffer['-1']
+        self.scan_buffer['-1'] = scan_data
+        self.depth_buffer['-2'] = self.depth_buffer['-1']
+        self.depth_buffer['-1'] = depth
         if (self.min_dist_range > dist_to_target):
             done = True
             reward+=10
@@ -156,9 +171,12 @@ class srlEnv(gazebo_env.GazeboEnv):
             print ("/gazebo/unpause_physics service call failed")
 
         pose_cmd = commendMsg()
-        pose_cmd.xd = action[0]
-        pose_cmd.yd = action[1]
-        pose_cmd.phid = action[2]
+        phi = self.odom_data_tmp[5]
+        c = np.cos(phi)
+        s = np.sin(phi)
+        pose_cmd.xd = self.odom_data_tmp[0]+c*action[0]-s*action[1]
+        pose_cmd.yd = self.odom_data_tmp[1]+s*action[0]+c*action[1]
+        pose_cmd.phid = phi+action[2]
         self.cmd_pub.publish(pose_cmd)
         
         time = None
@@ -175,44 +193,44 @@ class srlEnv(gazebo_env.GazeboEnv):
             except:
                 pass
 
-        scan = None
-        while scan is None:
+        self.scan = None
+        while self.scan is None:
             try:
-                scan = rospy.wait_for_message('/scan', LaserScan, timeout=5)
+                self.scan = rospy.wait_for_message('/scan', LaserScan, timeout=5)
             except:
                 pass
 
-        sonar_front = None
-        while sonar_front is None:
+        self.sonar = {'front':None}
+        while self.sonar['front'] is None:
             try:
-                sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
-                sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
-                sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
-                sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+                self.sonar['front'] = rospy.wait_for_message('/sonar_front', Range, timeout=5)
+                self.sonar['rear'] = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
+                self.sonar['left'] = rospy.wait_for_message('/sonar_left', Range, timeout=5)
+                self.sonar['right'] = rospy.wait_for_message('/sonar_right', Range, timeout=5)
             except:
                 pass
 
-        rgb = None
-        while rgb is None:
+        self.rgb = None
+        while self.rgb is None:
             try:
-                rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
+                self.rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
             except:
                 pass
 
-        depth = None
-        while depth is None:
+        self.depth = None
+        while self.depth is None:
             try:
-                depth =  rospy.wait_for_message('/kinect_depth_camera/camera/depth/image_raw', Image, timeout=5)
+                self.depth =  rospy.wait_for_message('/kinect_depth_camera/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
         
 
 
         odom_data = self.odom_to_data(odom)
-        odom_data_tmp = odom_data
+        self.odom_data_tmp = odom_data
         timestamp = time.secs+time.nsecs/1e+9
 
-        state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)
+        state,reward,done = self.calculate_observation(odom_data, action)
 
         self.vel_x_prev = action[0]
         self.vel_y_prev = action[1]
@@ -222,11 +240,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         reward += distance_decrease
         if done:
             pose_cmd = commendMsg()
-            pose_cmd.xd = 0.0
-            pose_cmd.yd = 0.0
-            pose_cmd.phid = 0.0
+            pose_cmd.xd = odom_data[0]
+            pose_cmd.yd = odom_data[1]
+            pose_cmd.phid = odom_data[5]
             self.cmd_pub.publish(pose_cmd)
-            self.odom_data_tmp = odom_data_tmp
+            # self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
 
         rospy.wait_for_service('/gazebo/pause_physics')
@@ -264,31 +282,31 @@ class srlEnv(gazebo_env.GazeboEnv):
                 odom = rospy.wait_for_message('/pose', Odometry, timeout=5).pose.pose
             except:
                 pass
-        scan = None
-        while scan is None:
+        self.scan = None
+        while self.scan is None:
             try:
-                scan = rospy.wait_for_message('/scan', LaserScan, timeout=5)
+                self.scan = rospy.wait_for_message('/scan', LaserScan, timeout=5)
             except:
                 pass
-        sonar_front = None
-        while sonar_front is None:
+        self.sonar = {'front':None}
+        while self.sonar['front'] is None:
             try:
-                sonar_front = rospy.wait_for_message('/sonar_front', Range, timeout=5)
-                sonar_rear = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
-                sonar_left = rospy.wait_for_message('/sonar_left', Range, timeout=5)
-                sonar_right = rospy.wait_for_message('/sonar_right', Range, timeout=5)
+                self.sonar['front'] = rospy.wait_for_message('/sonar_front', Range, timeout=5)
+                self.sonar['rear'] = rospy.wait_for_message('/sonar_rear', Range, timeout=5)
+                self.sonar['left'] = rospy.wait_for_message('/sonar_left', Range, timeout=5)
+                self.sonar['right'] = rospy.wait_for_message('/sonar_right', Range, timeout=5)
             except:
                 pass
-        rgb = None
-        while rgb is None:
+        self.rgb = None
+        while self.rgb is None:
             try:
-                rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
+                self.rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
             except:
                 pass
-        depth = None
-        while depth is None:
+        self.depth = None
+        while self.depth is None:
             try:
-                depth =  rospy.wait_for_message('/kinect_depth_camera/camera/depth/image_raw', Image, timeout=5)
+                self.depth =  rospy.wait_for_message('/kinect_depth_camera/camera/depth/image_raw', Image, timeout=5)
             except:
                 pass
         odom_data = self.odom_to_data(odom)
@@ -296,9 +314,10 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.vel_x_prev = 0.0
         self.vel_y_prev = 0.0
         self.vel_phi_prev = 0.0
-        print(self.target)
-        print(odom_data)
-        state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)
+        self.scan_buffer = {'-2':None, '-1':None}
+        self.depth_buffer = {'-2':None, '-1':None}
+
+        state,reward,done = self.calculate_observation(odom_data, action)
 
         self.state_prev = state
         rospy.wait_for_service('/gazebo/pause_physics')
