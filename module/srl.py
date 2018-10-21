@@ -31,25 +31,48 @@ class SRL:
 
         # observation networks
         self.obs = {}
+        with tf.name_scope('obs'):
+            for key in config.observation_networks.keys():
+                with tf.name_scope(key):
+                    self.obs[key] = tf.placeholder(
+                        tf.float32,
+                        [None]+config.observation_dim[key],
+                        name='in'
+                    )
+                    for idx, layer in enumerate(config.observation_networks[key]):
+                        self.obs[key] = _create_layer(self.obs[key] layer, layer['type']+str(idx))
+        state = 0.0
         for key in config.observation_networks.keys():
-            with tf.name_scope(key):
-                self.obs[key] = tf.placeholder(
-                    tf.float32,
-                    [None]+config.observation_dim[key],
-                    name='o'
-                )
-                for idx, layer in enumerate(config.observation_networks[key]):
-                    self.obs[key] = _create_layer(self.obs, layer, layer['type']+str(idx))
+            state = tf.add(state,self.obs[key])
 
         # prediction networks
-        for key in config.prediction_networks.keys():
-            pass
+        with tf.name_scope('pred'):
+            for key in config.prediction_networks.keys():
+                with tf.name_scope(key):
+                    self.pred[key] = tf.placeholder(
+                        tf.float32,
+                        [None]+config.state_dim,
+                        name='in'
+                    )
+                    for idx, layer in enumerate(config.prediction_networks[key]):
+                        self.obs[key] = _create_layer(self.pred[key], layer, layer['type']+str(idx))
 
         # reinforcement learnign networks
+        with tf.name_scope('rl'):
+            for key in config.rl_networks.keys():
+                with tf.name_scope(key):
+                    self.pred[key] = tf.placeholder(
+                        tf.float32,
+                        [None]+config.state_dim,
+                        name='in'
+                    )
+                    for idx, layer in enumerate(config.prediction_networks[key]):
+                        self.obs[key] = _create_layer(self.pred[key], layer, layer['type']+str(idx))
+
         for key in config.rl_networks.keys():
             pass
 
-        self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, name)
+        self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope = None)
         self.variables = {var.name:var for var in self.var_list}
         # self.noise = tf.placeholder(tf.float32, [None, config.action_dim])
         # build network

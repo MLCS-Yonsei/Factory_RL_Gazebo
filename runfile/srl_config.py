@@ -101,7 +101,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.state_dim[0],60]
+                    'shape':[self.state_dim[0]+self.action_dim[0],60]
                 },
                 {
                     'type':'dense',
@@ -113,7 +113,7 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[self.state_dim[0],100]
+                    'shape':[self.state_dim[0]+self.action_dim[0],100]
                 },
                 {
                     'type':'dense',
