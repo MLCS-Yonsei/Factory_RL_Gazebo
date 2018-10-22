@@ -29,6 +29,7 @@
 # sudo apt-get install libignition-math3 -y
 # sudo apt-get install libgazebo8 -y
 # sudo apt-get install gazebo8 -y
+# sudo apt-get install ros-kinetic-gazebo8-*
 
 #Alias#
 # echo "alias eb='gedit ~/.bashrc'" >>~/.bashrc

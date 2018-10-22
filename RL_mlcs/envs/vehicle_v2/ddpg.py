@@ -227,7 +227,6 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         odom = None
         while odom is None:
             try:
-                #odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
                 odom = rospy.wait_for_message('/pose', Odometry, timeout=5).pose.pose
             except:
                 pass
