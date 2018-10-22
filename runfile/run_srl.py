@@ -6,9 +6,10 @@ import numpy
 import random
 
 from env_reset import env_reset
-from module import srl, srl_replay, liveplot
+from module import srl, replay, liveplot
 
 from srl_config import config
+
 
 def render():
     render_skip = 0 #Skip first X episodes.
@@ -22,7 +23,7 @@ def render():
 
 if __name__ == '__main__':
 
-    env = gym.make('ddpg-v0')
+    env = gym.make('srl-v0')
 
     #env_reset().gazebo_warmup()
 
@@ -37,7 +38,7 @@ if __name__ == '__main__':
 
     memory = replay.Replay(config.max_buffer, \
                            config.batch_size, \
-                           observations=config.observation_dim.keys())
+                           observations=config.observation_networks.keys())
     if config.load_buffer:
         try:
             memory.buffer=numpy.load('srl_buffer.npy').item()
@@ -67,21 +68,25 @@ if __name__ == '__main__':
             action = srl.chooseAction(state0)
 
             # Execute the action and get feedback
-            state1,reward,done,info = env.step(action)
+            # state1,reward,done,info = env.step(action)
+            state1,reward,done,info = env.step([0.1, 0.0, 0.0])
             # print('action:',action,'  Done:',done)
             experience={
                 'lidar_0':state0['lidar'],
-                'rgbd_0':state0['rgbd'],
+                'depth_0':state0['depth'],
                 'proximity_0':state0['proximity'],
                 'control_0':state0['control'],
+                'goal_0':state0['goal'],
                 'lidar_1':state1['lidar'],
-                'rgbd_1':state1['rgbd'],
+                'depth_1':state1['depth'],
                 'proximity_1':state1['proximity'],
                 'control_1':state1['control'],
+                'goal_1':state1['goal'],
                 'action':action,
                 'reward':reward,
                 'done':done
             }
+
             memory.add(experience)
             numpy.save('srl_buffer.npy',memory.buffer)
 
@@ -92,8 +97,11 @@ if __name__ == '__main__':
 
             #nextState = ''.join(map(str, observation))
 
-            batch=memory.batch()
-            srl.learn(batch)
+            if memory.buffersize > config.batch_size:
+                batch=memory.batch()
+                srl.learn(batch)
+            else:
+                print 'buffersize: ', memory.buffersize
 
             # env._flush(force=True)
 
@@ -103,7 +111,7 @@ if __name__ == '__main__':
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
 
-        if x%100==0:
+        if (x+1)%100==0:
             # plotter.plot(env)
             numpy.save('srl_weights.npy',srl.return_variables())
         

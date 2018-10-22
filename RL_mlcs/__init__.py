@@ -12,3 +12,8 @@ register(
     id='ddpg-v0',
     entry_point='RL_mlcs.envs.vehicle_v2:ddpgEnv',
 )
+
+register(
+    id='srl-v0',
+    entry_point='RL_mlcs.envs.vehicle_v2:srlEnv',
+)

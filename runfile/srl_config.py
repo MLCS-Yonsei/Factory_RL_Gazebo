@@ -11,10 +11,11 @@ class Settings(object):
         self.gamma=0.99 # discount factor
         self.critic_learning_rate=1e-3
         self.actor_learning_rate=1e-4
+        self.srl_learning_rate=1e-3
         self.tau=1e-3
         self.l2_penalty=1e-5
         self.max_buffer=1e+5
-        self.batch_size=64
+        self.batch_size=4
         self.max_step=1e+3
         self.max_episode=1e+4
         self.max_epoch=1e+7
@@ -29,7 +30,8 @@ class Settings(object):
         }
         self.state_dim=[36]
         self.action_dim=[3]        
-        self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
+        self.action_max=[0.1,0.1,0.2]
+        self.action_min=[-0.1,-0.1,-0.2]
 
         # loss
         self.c_srl = 0.25
@@ -46,7 +48,7 @@ class Settings(object):
                 {
                     'type':'conv',
                     'activation':'prelu',
-                    'shape':[5,1,self.observation_dim['lidar'][3],6],
+                    'shape':[5,1,self.observation_dim['lidar'][2],6],
                     'strides':[1,1,1,1],
                     'pool':[1,3,1,1]
                 },
@@ -101,14 +103,14 @@ class Settings(object):
                 {
                     'type':'conv',
                     'activation':'prelu',
-                    'shape':[7,7,self.observation_dim['depth'][3],6],
+                    'shape':[7,7,self.observation_dim['depth'][2],6],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
                 {
                     'type':'conv',
                     'activation':'prelu',
-                    'shape':[5.5,6,9],
+                    'shape':[5,5,6,9],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
@@ -137,7 +139,7 @@ class Settings(object):
                     'type':'flatten',
                     'activation':'softplus',
                     'shape':[-1,108]
-                }
+                },
                 {
                     'type':'dense',
                     'activation':'softplus',
@@ -218,15 +220,15 @@ class Settings(object):
                 {
                     'type':'decision',
                     'shape':[18,self.action_dim[0]],
-                    'bounds':self.action_bounds,
-                    'epsilon':self.epsilon
+                    'a_max':self.action_max,
+                    'a_min':self.action_min
                 }
             ],
             'critic':[
                 {
                     'type':'dense',
                     'activation':'prelu',
-                    'shape':[self.state_dim[0]+self.action_dim,108]
+                    'shape':[self.state_dim[0]+self.action_dim[0],108]
                 },
                 {
                     'type':'dense',
