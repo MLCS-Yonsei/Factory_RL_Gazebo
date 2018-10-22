@@ -21,112 +21,180 @@ class Settings(object):
         
         # dimension setup
         self.observation_dim={
-            'lidar':[36],
+            'lidar':[36,1,3],
             'proximity':[4],
             'control':[3],
             'depth':[96,128,3],
             'goal':[2]
         }
-        self.state_dim=[50]
+        self.state_dim=[36]
         self.action_dim=[3]        
         self.action_bounds=[[0.2,0.2,0.5],[-0.2,-0.2,-0.5]] # [max,min]
+
+        # loss
+        self.c_srl = 0.25
+        self.c_rew = 0.5
+        self.c_slow = 1.0
+        self.c_div = 1.0
+        self.c_inv = 0.5
+        self.c_fwd = 1.0
+
 
         # layer setup
         self.observation_networks={
             'lidar':[
                 {
-                    'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.observation_dim['lidar'][0],200]
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[5,1,self.observation_dim['lidar'][3],6],
+                    'strides':[1,1,1,1],
+                    'pool':[1,3,1,1]
                 },
                 {
-                    'type':'dense',
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[3,1,6,9],
+                    'strides':[1,1,1,1],
+                    'pool':[1,3,1,1]
+                },
+                {
+                    'type':'flatten',
                     'activation':'softplus',
-                    'shape':[200,self.state_dim[0]]
+                    'shape':[-1,self.state_dim[0]]
                 }
             ],
             'proximity':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.observation_dim['proximity'][0],200]
+                    'activation':'prelu',
+                    'shape':[self.observation_dim['proximity'][0],12]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[200,self.state_dim[0]]
+                    'shape':[12,24]
+                },
+                {
+                    'type':'dense',
+                    'activation':'None',
+                    'shape':[24,self.state_dim[0]]
                 }
             ],
             'control':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.observation_dim['control'][0],200]
+                    'activation':'prelu',
+                    'shape':[self.observation_dim['control'][0],12]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[200,self.state_dim[0]]
+                    'shape':[12,24]
+                },
+                {
+                    'type':'dense',
+                    'activation':'None',
+                    'shape':[24,self.state_dim[0]]
                 }
             ],
             'depth':[
                 {
-                    'type':'conv2d',
-                    'activation':'softplus',
-                    'shape':[5,5,self.observation_dim['depth'][3],8],
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[7,7,self.observation_dim['depth'][3],6],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
                 {
-                    'type':'conv2d',
-                    'activation':'softplus',
-                    'shape':[3,3,8,9],
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[5.5,6,9],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
                 {
-                    'type':'conv2d',
-                    'activation':'softplus',
-                    'shape':[3,3,9,10],
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[3,3,9,12],
+                    'strides':[1,1,1,1],
+                    'pool':[1,2,2,1]
+                },
+                {
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[3,3,12,15],
+                    'strides':[1,1,1,1],
+                    'pool':[1,2,2,1]
+                },
+                {
+                    'type':'conv',
+                    'activation':'prelu',
+                    'shape':[3,3,15,18],
                     'strides':[1,1,1,1],
                     'pool':[1,2,2,1]
                 },
                 {
                     'type':'flatten',
-                    'shape':[-1,self.state_dim[0]]
+                    'activation':'softplus',
+                    'shape':[-1,108]
+                }
+                {
+                    'type':'dense',
+                    'activation':'softplus',
+                    'shape':[108,self.state_dim[0]]
                 }
             ],
             'goal':[
                 {
                     'type':'dense',
+                    'activation':'prelu',
+                    'shape':[self.observation_dim['goal'][0],12]
+                },
+                {
+                    'type':'dense',
+                    'activation':'softplus',
+                    'shape':[12,24]
+                },
+                {
+                    'type':'dense',
                     'activation':'None',
-                    'shape':[self.observation_dim['goal'][0],3]
+                    'shape':[24,self.state_dim[0]]
                 }
             ]
         }
         self.prediction_networks={
-            'reward_prediction':[
+            'reward':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.state_dim[0]+self.action_dim[0],60]
+                    'activation':'prelu',
+                    'shape':[self.state_dim[0]+self.action_dim[0],64]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[60,1]
+                    'shape':[64,32]
+                },
+                {
+                    'type':'dense',
+                    'activation':'None',
+                    'shape':[32,1]
                 }
             ],
-            'state_prediction':[
+            'state':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.state_dim[0]+self.action_dim[0],100]
+                    'activation':'prelu',
+                    'shape':[self.state_dim[0]+self.action_dim[0],72]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[100,self.state_dim[0]]
+                    'shape':[72,108]
+                },
+                {
+                    'type':'dense',
+                    'activation':'None',
+                    'shape':[108,self.state_dim[0]]
                 }
             ]
         }
@@ -134,17 +202,22 @@ class Settings(object):
             'actor':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.state_dim[0],50]
+                    'activation':'prelu',
+                    'shape':[self.state_dim[0],108]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[50,40]
+                    'shape':[108,54]
+                },
+                {
+                    'type':'dense',
+                    'activation':'softplus',
+                    'shape':[54,18]
                 },
                 {
                     'type':'decision',
-                    'shape':[40,self.action_dim[0]],
+                    'shape':[18,self.action_dim[0]],
                     'bounds':self.action_bounds,
                     'epsilon':self.epsilon
                 }
@@ -152,18 +225,23 @@ class Settings(object):
             'critic':[
                 {
                     'type':'dense',
-                    'activation':'softplus',
-                    'shape':[self.state_dim[0]+self.action_dim,60]
+                    'activation':'prelu',
+                    'shape':[self.state_dim[0]+self.action_dim,108]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[60,40]
+                    'shape':[108,54]
+                },
+                {
+                    'type':'dense',
+                    'activation':'softplus',
+                    'shape':[54,18]
                 },
                 {
                     'type':'dense',
                     'activation':'None',
-                    'shape':[40,1]
+                    'shape':[18,1]
                 }
             ]
         }
