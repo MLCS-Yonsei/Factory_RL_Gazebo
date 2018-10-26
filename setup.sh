@@ -59,7 +59,7 @@ sudo apt-get install ros-kinetic-eigen-conversions -y
 sudo apt-get install ros-kinetic-tf2-sensor-msgs -y
 sudo apt-get install ros-kinetic-pcl-ros -y
 sudo apt-get install ros-kinetic-navigation -y
-sudo apt install python-pip
+sudo apt install python-pip -y
 
 pip install gym
 pip install rospkg catkin_pkg
