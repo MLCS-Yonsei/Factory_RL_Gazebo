@@ -30,6 +30,43 @@
           -model vehicle_v2">
   </node>
 
+  <!-- G-mapping -->
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+
+	<param name="base_frame" value="base_footprint"/>
+	<param name="map_frame" value="map"/>
+	<param name="odom_frame" value="odom"/>
+	<param name="map_update_interval" value="2.0"/>
+	<param name="maxUrange" value="4.0"/>
+	<param name="minimumScore" value="100"/>
+	<param name="linearUpdate" value="0.2"/>
+	<param name="angularUpdate" value="0.2"/>
+	<param name="temporalUpdate" value="0.5"/>
+	<param name="delta" value="0.05"/>
+	<param name="lskip" value="0"/>
+	<param name="particles" value="120"/>
+	<param name="sigma" value="0.05"/>
+	<param name="kernelSize" value="1"/>
+	<param name="lstep" value="0.05"/>
+	<param name="astep" value="0.05"/>
+	<param name="iterations" value="5"/>
+	<param name="lsigma" value="0.075"/>
+	<param name="ogain" value="3.0"/>
+	<param name="srr" value="0.01"/>
+	<param name="srt" value="0.02"/>
+	<param name="str" value="0.01"/>
+	<param name="stt" value="0.02"/>
+	<param name="resampleThreshold" value="0.5"/>
+	<param name="xmin" value="-10.0"/>
+	<param name="ymin" value="-10.0"/>
+	<param name="xmax" value="10.0"/>
+	<param name="ymax" value="10.0"/>
+	<param name="llsamplerange" value="0.01"/>
+	<param name="llsamplestep" value="0.01"/>
+	<param name="lasamplerange" value="0.005"/>
+	<param name="lasamplestep" value="0.005"/>
+  </node>
+  
   <!-- State publisher -->
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
     <param name="publish_frequency" type="double" value="100.0" />
@@ -45,9 +82,11 @@
   <!-- Controller -->
   <group ns="controller_group">
     <node pkg="bringup_dual" type="vehicle_controller" name="control"/>
+    <node pkg="bringup_dual" type="odom_publisher" name="odometry"/>
+    <node pkg="bringup_dual" type="tf_broadcaster" name="tf"/>
   </group>
 
   <!-- run RViz node (visualization) -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find slam_dual)/rviz/slam.rviz">
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find slam_navi)/rviz/slam_navi.rviz">
   </node>
 </launch>

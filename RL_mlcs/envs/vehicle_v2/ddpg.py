@@ -13,6 +13,7 @@ from RL_mlcs.envs import gazebo_env
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
 
+from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image
@@ -30,7 +31,8 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
         self.vel_pub = rospy.Publisher('/ns1/cmd_msg', commendMsg, queue_size=5)
-        self.odom_pub = rospy.Publisher('/pose', Odometry, queue_size=5)
+        self.reset_pub = rospy.Publisher('/gazebo_reset', String, queue_size=5)
+        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -58,8 +60,9 @@ class ddpgEnv(gazebo_env.GazeboEnv):
                 done = True
                 reward-=10
         if done:
+            print('=====================================================================================')
             print('LiDAR detected')
-
+            print('=====================================================================================')
         #Sonar unifier
         for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
             sonar_data.append(item.range)
@@ -67,23 +70,22 @@ class ddpgEnv(gazebo_env.GazeboEnv):
                 done = True
                 reward-=10  
         if done:
-            print('========================================================')
+            print('=====================================================================================')
             print('Sonar detected')
-            print('========================================================')
+            print('=====================================================================================')
         #RGB reshape
         rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
         depth = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
         rgbd = np.concatenate((rgb,depth),axis=2)
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
-        print('========================================================')
-        print('Target pose')
+        print('Target pose : '),
         print(self.target)
-        print('Odom')
+        print('Odom :'),
         print(odom_data[:2])
-        print('Distance to Goal')
+        print('Distance to Goal :'),
         print(dist_to_target)
-        print('========================================================')
+        print('=====================================================================================')
         angle_to_target = np.arctan2((self.target[1] - odom_data[1]),(self.target[0] - odom_data[0])) - odom_data[2]
         if angle_to_target > np.pi:
             angle_to_target -= 2 * np.pi
@@ -95,9 +97,9 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         if (self.min_dist_range > dist_to_target):
             done = True
             reward+=10
-            print('========================================================')
+            print('#####################################################################################')
             print('Goal arrived')
-            print('========================================================')
+            print('#####################################################################################')
         return state,reward,done
 
 
@@ -141,7 +143,7 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         odom = None
         while odom is None:
             try:
-                odom = rospy.wait_for_message('/pose', Odometry, timeout=5).pose.pose
+                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
             except:
                 pass
 
@@ -209,7 +211,10 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
             subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.3 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
-            print ("Robot position reset")
+            self.reset_pub.publish("True")
+            print ('##########################')
+            print ("## Robot position reset ##")
+            print ('##########################')
         except (rospy.ServiceException) as e:
             print ("/gazebo/reset_simulation service call failed")
         
@@ -227,7 +232,7 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         odom = None
         while odom is None:
             try:
-                odom = rospy.wait_for_message('/pose', Odometry, timeout=5).pose.pose
+                odom = rospy.wait_for_message('/odom', Odometry, timeout=5).pose.pose
             except:
                 pass
         scan = None
