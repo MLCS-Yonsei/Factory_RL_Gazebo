@@ -32,7 +32,8 @@ class srlEnv(gazebo_env.GazeboEnv):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
         self.cmd_pub = rospy.Publisher('/ns1/cmd_msg', Pose2D, queue_size=5)
-        self.odom_pub = rospy.Publisher('/pose', Odometry, queue_size=5)
+        self.reset_pub = rospy.Publisher('/gazebo_reset', String, queue_size=5)
+        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -81,7 +82,6 @@ class srlEnv(gazebo_env.GazeboEnv):
                 reward-=10
         scan_data = np.reshape(scan_data,[-1,1,1])
         if done:
-            print('LiDAR detected')
         if type(self.scan_buffer['-2']) == type(None):
             self.scan_buffer['-2'] = scan_data
             self.scan_buffer['-1'] = scan_data
@@ -93,9 +93,6 @@ class srlEnv(gazebo_env.GazeboEnv):
                 done = True
                 reward-=10  
         if done:
-            print('========================================================')
-            print('Sonar detected')
-            print('========================================================')
         #RGB reshape
         rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
         depth = self.depth_from_raw(np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4]))
