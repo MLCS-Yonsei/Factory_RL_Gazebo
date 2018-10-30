@@ -17,7 +17,8 @@ from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
-from bringup_dual.msg import commendMsg
+from geometry_msgs.msg import Pose2D
+# from bringup_dual.msg import commendMsg
 from env_reset import env_reset
 
 from rosgraph_msgs.msg import Clock
@@ -30,7 +31,7 @@ class srlEnv(gazebo_env.GazeboEnv):
     def __init__(self):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
-        self.cmd_pub = rospy.Publisher('/ns1/cmd_msg', commendMsg, queue_size=5)
+        self.cmd_pub = rospy.Publisher('/ns1/cmd_msg', Pose2D, queue_size=5)
         self.odom_pub = rospy.Publisher('/pose', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)

@@ -216,12 +216,6 @@ class Settings(object):
                     'type':'dense',
                     'activation':'softplus',
                     'shape':[54,18]
-                },
-                {
-                    'type':'decision',
-                    'shape':[18,self.action_dim[0]],
-                    'a_max':self.action_max,
-                    'a_min':self.action_min
                 }
             ],
             'critic':[

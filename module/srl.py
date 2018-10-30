@@ -24,6 +24,8 @@ class SRL:
             sess_config.gpu_options.allow_growth = True
         else:
             sess_config = None
+        
+        # Tensorflow session
         self.sess = tf.Session(config = sess_config)
 
         # placeholder setup
@@ -40,17 +42,19 @@ class SRL:
 
         # observation networks
         self.obs = {}
+        self.obs_in = {}
         group = 'obs'
         with tf.name_scope(group):
             for key in config.observation_networks.keys():
                 for name in [key, key+'_target']:
                     with tf.name_scope(name):
                         trainable = False if name.split('_')[-1] == 'target' else True
-                        self.obs[name] = tf.placeholder(
+                        self.obs_in[name] = tf.placeholder(
                             tf.float32,
                             [None]+config.observation_dim[key],
                             name='in'
                         )
+                        self.obs[name] = self.obs_in[name]
                         for idx, layer in enumerate(config.observation_networks[key]):
                             self.obs[name] = \
                                 _create_layer(
@@ -85,44 +89,110 @@ class SRL:
         )
 
         # reinforcement learnign networks
-        self.rl = {}
-        self.noise_key = {}
         group = 'rl'
         with tf.name_scope(group):
-            for key in config.rl_networks.keys():
-                for name in [key, key+'_target']:
-                    with tf.name_scope(name):
-                        if key =='actor':
-                            self.rl[name] = \
-                                self.state if name.split('_')[-1] else self.state_target
-                        else:
-                            self.rl[name] = tf.concat([self.state, self.action], axis=1)
-                        trainable = False if name.split('_')[-1] == 'target' else True
-                        for idx, layer in enumerate(config.rl_networks[key]):
-                            if layer['type'] == 'decision':
-                                self.noise_key[name] = 'rl/'+name+'/'+str(idx)+'/decision/noise:0'
-                                if trainable:
-                                    self.noise_dim = layer['shape']
-                            self.rl[name] = \
-                                _create_layer(
-                                    self.rl[name],
-                                    layer,
-                                    str(idx),
-                                    trainable=trainable
-                                )
+            name = 'actor'
+            with tf.name_scope(name):
+                actor = self.state
+                for idx, layer in enumerate(config.rl_networks['actor']):
+                    actor = \
+                        _create_layer(
+                            actor,
+                            layer,
+                            str(idx),
+                        )
+                with tf.name_scope('decision'):
+                    self.noise_dim = config.rl_networks['actor'][-1]['shape'][-1:]+self.action_dim
+                    self.noise_stddev = 1/np.sqrt(self.noise_dim[0])
+                    w = tf.Variable(
+                        tf.random_normal(self.noise_dim, stddev=self.noise_stddev),
+                        name='weight',
+                    )
+                    b = tf.Variable(
+                        tf.random_normal([1]+self.noise_dim[-1:], stddev=self.noise_stddev), 
+                        name='bias', 
+                    )
+                    self.action_noise = tf.placeholder(tf.float32, self.noise_dim, name='noise')
+                    self.actor = tf.add(tf.matmul(actor, w), b)
+                    self.actor = \
+                        tf.add(
+                            tf.multiply(tf.nn.tanh(self.actor), self.a_scale),
+                            self.a_mean
+                        )
+                    self.noisy_action = \
+                        tf.add(tf.matmul(actor, tf.add(w, self.action_noise)), b)
+                    self.noisy_action = \
+                        tf.add(
+                            tf.multiply(tf.nn.tanh(self.noisy_action), self.a_scale),
+                            self.a_mean
+                        )
 
-                    self.var_list[name] = \
-                        tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+            self.var_list[name] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+            
+            name = 'actor_target'
+            with tf.name_scope(name):
+                actor_target = self.state_target
+                for idx, layer in enumerate(config.rl_networks['actor']):
+                    actor_target = \
+                        _create_layer(
+                            actor_target,
+                            layer,
+                            str(idx),
+                        )
+                with tf.name_scope('decision'):
+                    w = tf.Variable(
+                        tf.random_normal(self.noise_dim, stddev=self.noise_stddev),
+                        name='weight',
+                        trainable=False
+                    )
+                    b = tf.Variable(
+                        tf.random_normal([1]+self.noise_dim[-1:], stddev=self.noise_stddev), 
+                        name='bias', 
+                        trainable=False
+                    )
+                    self.actor_target = tf.add(tf.matmul(actor_target, w), b)
+                    self.actor_target = \
+                        tf.add(
+                            tf.multiply(tf.nn.tanh(self.actor_target), self.a_scale),
+                            self.a_mean
+                        )
+            self.var_list[name] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+            
+            name = 'critic'
+            with tf.name_scope(name):
+                self.critic = tf.concat([self.state, self.action], axis=1)
+                for idx, layer in enumerate(config.rl_networks['critic']):
+                    self.critic = \
+                        _create_layer(
+                            self.critic,
+                            layer,
+                            str(idx),
+                        )
+
+            self.var_list[name] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+
+            name = 'critic_target'
+            with tf.name_scope(name):
+                self.critic_target = tf.concat([self.state_target, self.action], axis=1)
+                for idx, layer in enumerate(config.rl_networks['critic']):
+                    self.critic_target = \
+                        _create_layer(
+                            self.critic_target,
+                            layer,
+                            str(idx),
+                            trainable=False
+                        )
+
+            self.var_list[name] = \
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group+'/'+name)
+
             self.var_list[group] = \
                 tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=group)
         self.vars_for_copy = {var.name:var for var in self.var_list['rl']+self.var_list['obs']}
         self.target_keys = [key for key in self.vars_for_copy.keys() if len(key.split('target'))>1]
-        self.noise_stddev = np.divide(
-            1.0,
-            np.sqrt(
-                np.array(self.noise_dim[0], dtype=np.float32)
-            )
-        )
         
         # prediction networks
         self.pred = {}
@@ -199,7 +269,7 @@ class SRL:
         y = self.reward\
             +tf.multiply(self.gamma, tf.multiply(self.target_q, 1.0-self.done))
         q_loss = \
-            tf.reduce_mean(tf.pow(self.rl['critic']-y, 2))\
+            tf.reduce_mean(tf.pow(self.critic-y, 2))\
             +config.l2_penalty*_l2_loss(self.var_list['critic'])
 
         # update all
@@ -234,15 +304,15 @@ class SRL:
                 )
 
         # update actor
-        act_grad_v = tf.gradients(self.rl['critic'], self.action)
+        act_grad_v = tf.gradients(self.critic, self.action)
         action_gradients = [act_grad_v[0]/tf.to_float(tf.shape(act_grad_v[0])[0])]
         del_Q_a = _gradient_inverter(
             [config.action_max, config.action_min],
             action_gradients,
-            self.rl['actor']
+            self.actor
         )
         parameters_gradients = tf.gradients(
-            self.rl['actor'], self.var_list['actor'], -del_Q_a)
+            self.actor, self.var_list['actor'], -del_Q_a)
         self.update_actor = tf.train.AdamOptimizer( \
             learning_rate = config.actor_learning_rate) \
             .apply_gradients(zip(parameters_gradients, self.var_list['actor']))
@@ -270,16 +340,21 @@ class SRL:
 
         fd = {}
         for key in self.observation_dim.keys():
-            fd['obs/'+key+'/in:0'] = \
+            fd[self.obs_in[key]] = \
                 self.normalize_obs(observation[key], key, 1)
-        fd[self.noise_key['actor']] = \
+
+        print '----srl.learn()----'
+        print fd[self.obs_in[key]].shape
+        print type(fd[self.obs_in[key]])
+
+        fd[self.action_noise] = \
             np.random.normal(
                 loc=0.0,
                 scale=self.epsilon*self.noise_stddev,
                 size=self.noise_dim
             )
 
-        action = self.sess.run(self.rl['actor'], feed_dict=fd)
+        action = self.sess.run(self.noisy_action, feed_dict=fd)
 
         return np.reshape(action, self.action_dim)
 
@@ -288,28 +363,39 @@ class SRL:
 
         fd = {}
         for key in self.observation_dim.keys():
-            fd['obs/'+key+'_target/in:0'] = \
+            fd[self.obs_in[key+'_target']] = \
                 self.normalize_obs(batch[key+'_1'], key, self.batch_size)
-        fd[self.noise_key['actor_target']] = \
-            np.zeros(self.noise_dim, dtype=np.float32)
 
-        target_action = self.sess.run(self.rl['actor_target'], feed_dict=fd)
+        print '----srl.learn()----'
+        print fd[self.obs_in[key+'_target']].shape
+        print type(d[self.obs_in[key+'_target']])
+
+        target_action = self.sess.run(self.actor_target, feed_dict=fd)
 
         fd[self.action] = target_action
 
-        target_q = self.sess.run(self.rl['critic_target'], feed_dict=fd)
+        target_q = self.sess.run(self.critic_target, feed_dict=fd)
 
+        fd = {}
         for key in self.observation_dim:
-            fd['obs/'+key+'/in:0'] = \
+            fd[self.obs_in[key]] = \
                 self.normalize_obs(batch[key+'_0'], key, self.batch_size)
-        fd[self.noise_key['actor']] = np.zeros(self.noise_dim, dtype=np.float32)
         fd[self.action] = np.reshape(
             batch['action'], [self.batch_size]+self.action_dim)
         fd[self.target_q] = target_q
         fd[self.reward] = np.reshape(batch['reward'], [self.batch_size, 1])
         fd[self.done] = np.reshape(batch['done'], [self.batch_size, 1])
 
-        self.sess.run([self.update_all, self.update_actor], feed_dict=fd)
+        self.sess.run(self.update_all, feed_dict=fd)
+
+        fd = {}
+        for key in self.observation_dim:
+            fd[self.obs_in[key]] = \
+                self.normalize_obs(batch[key+'_0'], key, self.batch_size)
+        fd[self.action] = np.reshape(
+            batch['action'], [self.batch_size]+self.action_dim)
+
+        self.sess.run(self.update_actor, feed_dict=fd)
 
         self.sess.run(self.assign_target_soft)
 
@@ -365,7 +451,7 @@ def _create_layer(in_, layer, name, trainable=True, eps=None):
                     in_, 
                     tf.Variable(
                         tf.random_normal(layer['shape'], stddev=stddev), 
-                        name = 'w', 
+                        name = 'weight', 
                         trainable=trainable
                     )
                 )
@@ -373,7 +459,7 @@ def _create_layer(in_, layer, name, trainable=True, eps=None):
                     out_,
                     tf.Variable(
                         tf.random_normal([1]+layer['shape'][-1:], stddev=stddev), 
-                        name='b', 
+                        name='bias', 
                         trainable=trainable
                     )
                 )
@@ -417,42 +503,12 @@ def _create_layer(in_, layer, name, trainable=True, eps=None):
                     tf.Variable(
                         tf.random_normal(layer['shape'][-1:], stddev=stddev),
                         name='bias',
-                        trainable=trainable)
+                        trainable=trainable
+                    )
                 )
                 out_ = _activation(layer['activation'], out_)
                 if layer['pool'] !='None':
                     out_ = tf.nn.max_pool(out_, layer['pool'], layer['pool'], padding='SAME')
-        elif layer['type'] == 'decision':
-            stddev = 1/np.sqrt(layer['shape'][0])
-            with tf.name_scope('decision'):
-                out_ = tf.matmul(
-                    in_,
-                    tf.add(
-                        tf.Variable(
-                            tf.random_normal(layer['shape'], stddev=stddev), 
-                            name = 'w', 
-                            trainable=trainable
-                        ),
-                        tf.placeholder(tf.float32, layer['shape'], name='noise')
-                    )
-                )
-                out_ = tf.add(
-                    out_,
-                    tf.Variable(
-                        tf.random_normal(layer['shape'][-1:], stddev=stddev), 
-                        name='b', 
-                        trainable=trainable
-                    )
-                )
-                out_ = _activation('tanh', out_)
-                out_ = tf.multiply(
-                    out_,
-                    tf.subtract(layer['a_max'], layer['a_min'])
-                )
-                out_ = tf.add(
-                    out_,
-                    tf.add(layer['a_max'], layer['a_min'])
-                )
         else:
             out_ = in_
 
