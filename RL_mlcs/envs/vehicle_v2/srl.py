@@ -18,6 +18,7 @@ from sensor_msgs.msg import Range
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose2D
+from std_msgs.msg import String
 # from bringup_dual.msg import commendMsg
 from env_reset import env_reset
 
@@ -81,7 +82,6 @@ class srlEnv(gazebo_env.GazeboEnv):
                 done = True
                 reward-=10
         scan_data = np.reshape(scan_data,[-1,1,1])
-        if done:
         if type(self.scan_buffer['-2']) == type(None):
             self.scan_buffer['-2'] = scan_data
             self.scan_buffer['-1'] = scan_data
@@ -92,7 +92,6 @@ class srlEnv(gazebo_env.GazeboEnv):
             if (self.min_sonar_range > self.sonar[key].range > 0):
                 done = True
                 reward-=10  
-        if done:
         #RGB reshape
         rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
         depth = self.depth_from_raw(np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4]))
@@ -128,9 +127,6 @@ class srlEnv(gazebo_env.GazeboEnv):
         if (self.min_dist_range > dist_to_target):
             done = True
             reward+=10
-            print('========================================================')
-            print('Goal arrived')
-            print('========================================================')
         return state,reward,done
 
 
@@ -166,13 +162,13 @@ class srlEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = commendMsg()
+        pose_cmd = Pose2D()
         phi = self.odom_data_tmp[5]
         c = np.cos(phi)
         s = np.sin(phi)
-        pose_cmd.xd = self.odom_data_tmp[0]+c*action[0]-s*action[1]
-        pose_cmd.yd = self.odom_data_tmp[1]+s*action[0]+c*action[1]
-        pose_cmd.phid = phi+action[2]
+        pose_cmd.x = self.odom_data_tmp[0]+c*action[0]-s*action[1]
+        pose_cmd.y = self.odom_data_tmp[1]+s*action[0]+c*action[1]
+        pose_cmd.theta = phi+action[2]
         self.cmd_pub.publish(pose_cmd)
         
         time = None
@@ -235,10 +231,10 @@ class srlEnv(gazebo_env.GazeboEnv):
         distance_decrease = (self.state_prev['goal'][0] - state['goal'][0]) * 5.0
         reward += distance_decrease
         if done:
-            pose_cmd = commendMsg()
-            pose_cmd.xd = odom_data[0]
-            pose_cmd.yd = odom_data[1]
-            pose_cmd.phid = odom_data[5]
+            pose_cmd = Pose2D()
+            pose_cmd.x = odom_data[0]
+            pose_cmd.y = odom_data[1]
+            pose_cmd.theta = odom_data[5]
             self.cmd_pub.publish(pose_cmd)
             # self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
@@ -266,10 +262,10 @@ class srlEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = commendMsg()
-        pose_cmd.xd = 0.0
-        pose_cmd.yd = 0.0
-        pose_cmd.phid = 0.0
+        pose_cmd = Pose2D()
+        pose_cmd.x = 0.0
+        pose_cmd.y = 0.0
+        pose_cmd.theta = 0.0
         self.cmd_pub.publish(pose_cmd)
         odom = None
         while odom is None:
@@ -313,6 +309,8 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.scan_buffer = {'-2':None, '-1':None}
         self.depth_buffer = {'-2':None, '-1':None}
         self.dist_to_target_prev = None
+
+        self.target = choice(self.target_set)
 
         state,reward,done = self.calculate_observation(odom_data, [0.0, 0.0, 0.0])
 

@@ -228,7 +228,7 @@ class SRL:
         fwd_loss = tf.reduce_mean(
             tf.reduce_sum(
                 tf.pow(
-                    tf.subtract(self.pred['state'], self.state_target),
+                    tf.subtract(self.pred['state'], self.target_state),
                     2
                 ),
                 axis=1
@@ -238,7 +238,7 @@ class SRL:
         slow_loss = tf.reduce_mean(
             tf.reduce_sum(
                 tf.pow(
-                    tf.subtract(self.state, self.state_target),
+                    tf.subtract(self.state, self.target_state),
                     2
                 ),
                 axis=1
@@ -343,9 +343,10 @@ class SRL:
             fd[self.obs_in[key]] = \
                 self.normalize_obs(observation[key], key, 1)
 
-        print '----srl.learn()----'
+        print '----srl.chooseAction()----'
         print fd[self.obs_in[key]].shape
         print type(fd[self.obs_in[key]])
+        print type(fd[self.obs_in[key]][0,0,0,0])
 
         fd[self.action_noise] = \
             np.random.normal(
@@ -368,15 +369,19 @@ class SRL:
 
         print '----srl.learn()----'
         print fd[self.obs_in[key+'_target']].shape
-        print type(d[self.obs_in[key+'_target']])
+        print type(fd[self.obs_in[key+'_target']])
+        print type(fd[self.obs_in[key+'_target']][0,0,0,0])
 
-        target_action = self.sess.run(self.actor_target, feed_dict=fd)
+        target_action, target_state = \
+            self.sess.run([self.actor_target, self.state_target], feed_dict=fd)
+        print 'self.sess.run([self.actor_target, self.state_target], feed_dict=fd)'
 
         fd[self.action] = target_action
 
         target_q = self.sess.run(self.critic_target, feed_dict=fd)
+        print 'target_q = self.sess.run(self.critic_target, feed_dict=fd)'
 
-        fd = {}
+        fd.clear()
         for key in self.observation_dim:
             fd[self.obs_in[key]] = \
                 self.normalize_obs(batch[key+'_0'], key, self.batch_size)
@@ -385,10 +390,12 @@ class SRL:
         fd[self.target_q] = target_q
         fd[self.reward] = np.reshape(batch['reward'], [self.batch_size, 1])
         fd[self.done] = np.reshape(batch['done'], [self.batch_size, 1])
+        fd[self.target_state] = target_state
 
         self.sess.run(self.update_all, feed_dict=fd)
+        print 'self.sess.run(self.update_all, feed_dict=fd)'
 
-        fd = {}
+        fd.clear()
         for key in self.observation_dim:
             fd[self.obs_in[key]] = \
                 self.normalize_obs(batch[key+'_0'], key, self.batch_size)
@@ -396,6 +403,7 @@ class SRL:
             batch['action'], [self.batch_size]+self.action_dim)
 
         self.sess.run(self.update_actor, feed_dict=fd)
+        print 'self.sess.run(self.update_actor, feed_dict=fd)'
 
         self.sess.run(self.assign_target_soft)
 
@@ -415,7 +423,7 @@ class SRL:
     
     def return_variables(self):
 
-        return self.vars
+        return {name:self.sess.run(name) for name in self.vars}
 
 
     def normalize_obs(self, in_, key, batch_size):

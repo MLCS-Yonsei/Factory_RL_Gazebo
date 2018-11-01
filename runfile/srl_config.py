@@ -73,12 +73,12 @@ class Settings(object):
                 },
                 {
                     'type':'dense',
-                    'activation':'softplus',
+                    'activation':'prelu',
                     'shape':[12,24]
                 },
                 {
                     'type':'dense',
-                    'activation':'None',
+                    'activation':'softplus',
                     'shape':[24,self.state_dim[0]]
                 }
             ],
@@ -90,12 +90,12 @@ class Settings(object):
                 },
                 {
                     'type':'dense',
-                    'activation':'softplus',
+                    'activation':'prelu',
                     'shape':[12,24]
                 },
                 {
                     'type':'dense',
-                    'activation':'None',
+                    'activation':'softplus',
                     'shape':[24,self.state_dim[0]]
                 }
             ],
@@ -137,7 +137,7 @@ class Settings(object):
                 },
                 {
                     'type':'flatten',
-                    'activation':'softplus',
+                    'activation':'prelu',
                     'shape':[-1,108]
                 },
                 {
@@ -154,12 +154,12 @@ class Settings(object):
                 },
                 {
                     'type':'dense',
-                    'activation':'softplus',
+                    'activation':'prelu',
                     'shape':[12,24]
                 },
                 {
                     'type':'dense',
-                    'activation':'None',
+                    'activation':'softplus',
                     'shape':[24,self.state_dim[0]]
                 }
             ]
@@ -178,8 +178,13 @@ class Settings(object):
                 },
                 {
                     'type':'dense',
-                    'activation':'None',
-                    'shape':[32,1]
+                    'activation':'softplus',
+                    'shape':[32,16]
+                },
+                {
+                    'type':'dense',
+                    'activation':'softplus',
+                    'shape':[16,1]
                 }
             ],
             'state':[

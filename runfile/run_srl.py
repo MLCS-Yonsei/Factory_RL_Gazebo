@@ -35,6 +35,7 @@ if __name__ == '__main__':
     last_time_steps = numpy.ndarray(0)
 
     srl = srl.SRL(config)
+    srl.load(numpy.load('srl_weights.npy').item())
 
     memory = replay.Replay(config.max_buffer, \
                            config.batch_size, \
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
 
-        if (x+1)%100==0:
+        if (x+1)%10==0:
             # plotter.plot(env)
             numpy.save('srl_weights.npy',srl.return_variables())
         
