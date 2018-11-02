@@ -1,4 +1,5 @@
 import gym
+import sys
 import time
 import rospy
 import roslaunch
@@ -32,9 +33,8 @@ class srlEnv(gazebo_env.GazeboEnv):
     def __init__(self):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
-        self.cmd_pub = rospy.Publisher('/ns1/cmd_msg', Pose2D, queue_size=5)
+        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
         self.reset_pub = rospy.Publisher('/gazebo_reset', String, queue_size=5)
-        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -45,8 +45,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.min_scan_range = 0.5
         self.min_sonar_range = 0.1
         self.min_dist_range = 0.1
-        self.odom_data_tmp = [0,0,0,0,0,0]
-        self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
+        self.odom_data_tmp = [0.0, 0.0, 0.0]
+        self.action_space = spaces.Box(
+            low=np.array([-0.2, -0.2, -0.5]),
+            high=np.array([0.2, 0.2, 0.5])
+        )
         self.target_set=[
             [ 17.5,-4.5],
             [ 17.5, 0.5],
@@ -73,7 +76,7 @@ class srlEnv(gazebo_env.GazeboEnv):
         scan_data = []
         sonar_data = []
         done = False
-        reward = -action[2]**2
+        reward = 0.1*(-action[2]**2-action[2]**2)
         #Scan normalize by dividing by 10
         for i, item in enumerate(self.scan.ranges):
             if i % 10 == 0:
@@ -93,21 +96,13 @@ class srlEnv(gazebo_env.GazeboEnv):
                 done = True
                 reward-=10  
         #RGB reshape
-        rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
+        # rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
         depth = self.depth_from_raw(np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4]))
         if type(self.depth_buffer['-2']) == type(None):
             self.depth_buffer['-2'] = depth
             self.depth_buffer['-1'] = depth
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
-        print('========================================================')
-        print('Target pose')
-        print(self.target)
-        print('Odom')
-        print(odom_data[:2])
-        print('Distance to Goal')
-        print(dist_to_target)
-        print('========================================================')
         angle_to_target = np.arctan2((self.target[1] - odom_data[1]),(self.target[0] - odom_data[0])) - odom_data[2]
         if angle_to_target > np.pi:
             angle_to_target -= 2 * np.pi
@@ -118,7 +113,7 @@ class srlEnv(gazebo_env.GazeboEnv):
         state['proximity'] = np.array(sonar_data)
         state['control'] = np.array([self.vel_x_prev, self.vel_y_prev, self.vel_phi_prev])
         state['goal'] = np.array([dist_to_target,angle_to_target])
-        state['rgb'] = rgb
+        # state['rgb'] = rgb
         state['depth'] = np.concatenate([depth,self.depth_buffer['-1'],self.depth_buffer['-2']],axis=2)
         self.scan_buffer['-2'] = self.scan_buffer['-1']
         self.scan_buffer['-1'] = scan_data
@@ -162,21 +157,19 @@ class srlEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = Pose2D()
-        phi = self.odom_data_tmp[5]
-        c = np.cos(phi)
-        s = np.sin(phi)
-        pose_cmd.x = self.odom_data_tmp[0]+c*action[0]-s*action[1]
-        pose_cmd.y = self.odom_data_tmp[1]+s*action[0]+c*action[1]
-        pose_cmd.theta = phi+action[2]
-        self.cmd_pub.publish(pose_cmd)
+        vel_cmd = Twist()
+        vel_cmd.linear.x = action[0]
+        vel_cmd.linear.y = action[1]
+        vel_cmd.angular.z = action[2]
+        self.vel_pub.publish(vel_cmd)
         
-        time = None
-        while time is None:
+        rostime = None
+        while rostime is None:
             try:
-                time = rospy.wait_for_message('/clock', Clock, timeout=5).clock
+                rostime = rospy.wait_for_message('/clock', Clock, timeout=5).clock
             except:
                 pass
+        self.timestamp = rostime.secs+rostime.nsecs/1e+9
         
         odom = None
         while odom is None:
@@ -202,12 +195,12 @@ class srlEnv(gazebo_env.GazeboEnv):
             except:
                 pass
 
-        self.rgb = None
-        while self.rgb is None:
-            try:
-                self.rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
-            except:
-                pass
+        # self.rgb = None
+        # while self.rgb is None:
+        #     try:
+        #         self.rgb =  rospy.wait_for_message('/kinect_rgb_camera/camera/rgb/image_raw', Image, timeout=5)
+        #     except:
+        #         pass
 
         self.depth = None
         while self.depth is None:
@@ -220,7 +213,6 @@ class srlEnv(gazebo_env.GazeboEnv):
 
         odom_data = self.odom_to_data(odom)
         self.odom_data_tmp = odom_data
-        timestamp = time.secs+time.nsecs/1e+9
 
         state,reward,done = self.calculate_observation(odom_data, action)
 
@@ -231,11 +223,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         distance_decrease = (self.state_prev['goal'][0] - state['goal'][0]) * 5.0
         reward += distance_decrease
         if done:
-            pose_cmd = Pose2D()
-            pose_cmd.x = odom_data[0]
-            pose_cmd.y = odom_data[1]
-            pose_cmd.theta = odom_data[5]
-            self.cmd_pub.publish(pose_cmd)
+            vel_cmd = Twist()
+            vel_cmd.linear.x = 0.0
+            vel_cmd.linear.y = 0.0
+            vel_cmd.angular.z = 0.0
+            self.vel_pub.publish(vel_cmd)
             # self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
 
@@ -262,11 +254,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = Pose2D()
-        pose_cmd.x = 0.0
-        pose_cmd.y = 0.0
-        pose_cmd.theta = 0.0
-        self.cmd_pub.publish(pose_cmd)
+        vel_cmd = Twist()
+        vel_cmd.linear.x = 0.0
+        vel_cmd.linear.y = 0.0
+        vel_cmd.angular.z = 0.0
+        self.vel_pub.publish(vel_cmd)
         odom = None
         while odom is None:
             try:

@@ -343,11 +343,6 @@ class SRL:
             fd[self.obs_in[key]] = \
                 self.normalize_obs(observation[key], key, 1)
 
-        print '----srl.chooseAction()----'
-        print fd[self.obs_in[key]].shape
-        print type(fd[self.obs_in[key]])
-        print type(fd[self.obs_in[key]][0,0,0,0])
-
         fd[self.action_noise] = \
             np.random.normal(
                 loc=0.0,
@@ -367,19 +362,12 @@ class SRL:
             fd[self.obs_in[key+'_target']] = \
                 self.normalize_obs(batch[key+'_1'], key, self.batch_size)
 
-        print '----srl.learn()----'
-        print fd[self.obs_in[key+'_target']].shape
-        print type(fd[self.obs_in[key+'_target']])
-        print type(fd[self.obs_in[key+'_target']][0,0,0,0])
-
         target_action, target_state = \
             self.sess.run([self.actor_target, self.state_target], feed_dict=fd)
-        print 'self.sess.run([self.actor_target, self.state_target], feed_dict=fd)'
 
         fd[self.action] = target_action
 
         target_q = self.sess.run(self.critic_target, feed_dict=fd)
-        print 'target_q = self.sess.run(self.critic_target, feed_dict=fd)'
 
         fd.clear()
         for key in self.observation_dim:
@@ -393,7 +381,6 @@ class SRL:
         fd[self.target_state] = target_state
 
         self.sess.run(self.update_all, feed_dict=fd)
-        print 'self.sess.run(self.update_all, feed_dict=fd)'
 
         fd.clear()
         for key in self.observation_dim:
@@ -403,7 +390,6 @@ class SRL:
             batch['action'], [self.batch_size]+self.action_dim)
 
         self.sess.run(self.update_actor, feed_dict=fd)
-        print 'self.sess.run(self.update_actor, feed_dict=fd)'
 
         self.sess.run(self.assign_target_soft)
 

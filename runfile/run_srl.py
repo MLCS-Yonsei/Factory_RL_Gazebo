@@ -69,8 +69,7 @@ if __name__ == '__main__':
             action = srl.chooseAction(state0)
 
             # Execute the action and get feedback
-            # state1,reward,done,info = env.step(action)
-            state1,reward,done,info = env.step([0.1, 0.0, 0.0])
+            state1,reward,done,info = env.step(action)
             # print('action:',action,'  Done:',done)
             experience={
                 'lidar_0':state0['lidar'],
@@ -101,8 +100,6 @@ if __name__ == '__main__':
             if memory.buffersize > config.batch_size:
                 batch=memory.batch()
                 srl.learn(batch)
-            else:
-                print 'buffersize: ', memory.buffersize
 
             # env._flush(force=True)
 
