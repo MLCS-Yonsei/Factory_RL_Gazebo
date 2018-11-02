@@ -31,9 +31,9 @@ class ddpgEnv(gazebo_env.GazeboEnv):
     def __init__(self):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "vehicle_v2.launch")
-        self.vel_pub = rospy.Publisher('/ns1/cmd_msg', Pose2D, queue_size=5)
+        # self.vel_pub = rospy.Publisher('/ns1/cmd_msg', Pose2D, queue_size=5) # publisher for pose control
+        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5) # publisher for velocity control
         self.reset_pub = rospy.Publisher('/gazebo_reset', String, queue_size=5)
-        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
         self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
@@ -128,16 +128,16 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = commendMsg()
-        pose_cmd.xd = action[0]
-        pose_cmd.yd = action[1]
-        pose_cmd.phid = action[2]
-        self.vel_pub.publish(pose_cmd)
+        vel_cmd = Twist()
+        vel_cmd.linear.x = action[0]
+        vel_cmd.linear.y = action[1]
+        vel_cmd.angular.z = action[2]
+        self.vel_pub.publish(vel_cmd)
         
-        time = None
-        while time is None:
+        rostime = None
+        while rostime is None:
             try:
-                time = rospy.wait_for_message('/clock', Clock, timeout=5).clock
+                rostime = rospy.wait_for_message('/clock', Clock, timeout=5).clock
             except:
                 pass
         
@@ -181,7 +181,7 @@ class ddpgEnv(gazebo_env.GazeboEnv):
 
         odom_data = self.odom_to_data(odom)
         odom_data_tmp = odom_data
-        timestamp = time.secs+time.nsecs/1e+9
+        timestamp = rostime.secs+rostime.nsecs/1e+9
 
         state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)
 
@@ -192,11 +192,11 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         distance_decrease = (self.state_prev['vector'][-2] - state['vector'][-2]) * 5.0
         reward += distance_decrease
         if done:
-            pose_cmd = commendMsg()
-            pose_cmd.xd = 0.0
-            pose_cmd.yd = 0.0
-            pose_cmd.phid = 0.0
-            self.vel_pub.publish(pose_cmd)
+            vel_cmd = Twist()
+            vel_cmd.linear.x = 0.0
+            vel_cmd.linear.y = 0.0
+            vel_cmd.angular.z = 0.0
+            self.vel_pub.publish(vel_cmd)
             self.odom_data_tmp = odom_data_tmp
         self.state_prev = state
 
@@ -225,11 +225,11 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
-        pose_cmd = commendMsg()
-        pose_cmd.xd = 0.0
-        pose_cmd.yd = 0.0
-        pose_cmd.phid = 0.0
-        self.vel_pub.publish(pose_cmd)
+        vel_cmd = Twist()
+        vel_cmd.linear.x = 0.0
+        vel_cmd.linear.y = 0.0
+        vel_cmd.angular.z = 0.0
+        self.vel_pub.publish(vel_cmd)
         odom = None
         while odom is None:
             try:
