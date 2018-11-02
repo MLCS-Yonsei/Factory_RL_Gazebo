@@ -2,7 +2,7 @@
 <launch>
   <arg name="robot" default="vehicle_v2"/>
   <arg name="paused" default="false"/>
-  <arg name="use_sim_time" default="false"/>
+  <arg name="use_sim_time" default="true"/>
   <arg name="gui" default="true"/>
   <arg name="world_name" default="$(find bringup_dual)/worlds/fixed_world.world" />
   <arg name="init_pos_x" default="0.0"/>
@@ -80,11 +80,11 @@
   </node>
 
   <!-- Controller -->
-  <group ns="controller_group">
+  <!-- <group ns="controller_group">
     <node pkg="bringup_dual" type="vehicle_controller" name="control"/>
-    <!-- <node pkg="bringup_dual" type="odom_publisher" name="odometry"/>
-    <node pkg="bringup_dual" type="tf_broadcaster" name="tf"/> -->
-  </group>
+    <node pkg="bringup_dual" type="odom_publisher" name="odometry"/>
+    <node pkg="bringup_dual" type="tf_broadcaster" name="tf"/>
+  </group> -->
 
   <!-- run RViz node (visualization) -->
   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find slam_navi)/rviz/slam_navi.rviz">
