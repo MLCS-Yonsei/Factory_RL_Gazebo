@@ -266,7 +266,7 @@ class SRL:
         )
 
         # reinforcement learning loss
-        y = self.reward\
+        y = self.reward \
             +tf.multiply(self.gamma, tf.multiply(self.target_q, 1.0-self.done))
         q_loss = \
             tf.reduce_mean(tf.pow(self.critic-y, 2))\
@@ -417,13 +417,13 @@ class SRL:
         in_ = np.array(in_, dtype=np.float32)
 
         if key =='lidar':
-            out_ = np.exp(-in_)
+            out_ = np.exp(np.divide(-in_,np.float32(2.0)))
         elif key =='proximity':
             out_ = np.exp(-in_)
         elif key =='control':
-            out_ = np.divide(in_, self.a_scale)
+            out_ = np.divide(in_, np.float32(self.a_scale))
         elif key =='depth':
-            out_ = in_/255.0
+            out_ = np.divide(in_, np.float32(255.0))
         elif key =='goal':
             out_ = np.exp(-in_)
 

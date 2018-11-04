@@ -42,7 +42,14 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
         self._seed()
-        self.min_scan_range = 0.5
+        self.min_scan_range = []
+        for idx in range(36):
+            self.min_scan_range.append(
+                min(
+                    np.abs(0.5/np.cos(np.pi*(2.0*idx+1.0/36.0))),
+                    np.abs(0.4/np.sin(np.pi*(2.0*idx+1.0/36.0)))
+                )
+            )
         self.min_sonar_range = 0.1
         self.min_dist_range = 0.1
         self.odom_data_tmp = [0.0, 0.0, 0.0]
@@ -65,10 +72,11 @@ class srlEnv(gazebo_env.GazeboEnv):
             [-17.5,-4.5],
             [-17.5, 0.5]
         ]
-        self.target = [0.0, 0.0]
+        self.target = [0.0, 0.0, 0.0]
         self.vel_x_prev = 0.0
         self.vel_y_prev = 0.0
         self.vel_phi_prev = 0.0
+        self.dist_prev = None
         self.scan_buffer = {'-2':None, '-1':None}
         self.depth_buffer = {'-2':None, '-1':None}
         
@@ -76,15 +84,19 @@ class srlEnv(gazebo_env.GazeboEnv):
         scan_data = []
         sonar_data = []
         done = False
+        crash = False
+        
+        # regularize linear.y and angular.z
         reward = 0.1*(-action[2]**2-action[2]**2)
+        
         #Scan normalize by dividing by 10
         for i, item in enumerate(self.scan.ranges):
             if i % 10 == 0:
                 scan_data.append(min(self.scan.ranges[i:i+9]))
-            if (self.min_scan_range > item > 0):
-                done = True
-                reward-=10
+            if (self.min_scan_range[i/10] > item > 0):
+                crash = True
         scan_data = np.reshape(scan_data,[-1,1,1])
+        scan_data[np.isinf(scan_data)] = 11.0
         if type(self.scan_buffer['-2']) == type(None):
             self.scan_buffer['-2'] = scan_data
             self.scan_buffer['-1'] = scan_data
@@ -93,36 +105,68 @@ class srlEnv(gazebo_env.GazeboEnv):
         for key in self.sonar.keys():
             sonar_data.append(self.sonar[key].range)
             if (self.min_sonar_range > self.sonar[key].range > 0):
-                done = True
-                reward-=10  
+                crash = True
+
         #RGB reshape
         # rgb = np.reshape(np.fromstring(self.rgb.data, np.uint8),[96,128,3])
-        depth = self.depth_from_raw(np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4]))
+        depth = self.depth_from_raw(
+            np.reshape(np.fromstring(self.depth.data, np.uint8),[96,128,4])
+        )
         if type(self.depth_buffer['-2']) == type(None):
             self.depth_buffer['-2'] = depth
             self.depth_buffer['-1'] = depth
+
         #Relative distance & angle
-        dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
-        angle_to_target = np.arctan2((self.target[1] - odom_data[1]),(self.target[0] - odom_data[0])) - odom_data[2]
+        dist_to_target = math.sqrt(
+            (self.target[0]-odom_data[0])**2+(self.target[1]-odom_data[1])**2
+        )
+        angle_to_target = np.arctan2(
+            self.target[1]-odom_data[1],self.target[0]-odom_data[0])-\
+            odom_data[2]
         if angle_to_target > np.pi:
             angle_to_target -= 2 * np.pi
         if angle_to_target < -np.pi:
             angle_to_target += 2 * np.pi
+        target_angle = self.target[2]-odom_data[5]
+        if target_angle > np.pi:
+            target_angle -= 2 * np.pi
+        if target_angle < -np.pi:
+            target_angle += 2 * np.pi
         state={}
-        state['lidar'] = np.concatenate([scan_data,self.scan_buffer['-1'],self.scan_buffer['-2']],axis=2)
-        state['proximity'] = np.array(sonar_data)
-        state['control'] = np.array([self.vel_x_prev, self.vel_y_prev, self.vel_phi_prev])
-        state['goal'] = np.array([dist_to_target,angle_to_target])
+        state['lidar'] = np.concatenate(
+            [scan_data, self.scan_buffer['-1'], self.scan_buffer['-2']],
+            axis=2
+        )
+        state['proximity'] = np.array(sonar_data, dtype=np.float32)
+        state['control'] = np.array(
+            [self.vel_x_prev, self.vel_y_prev, self.vel_phi_prev],
+            dtype=np.float32
+        )
+        state['goal'] = np.array([dist_to_target,angle_to_target,target_angle],dtype=np.float32)
         # state['rgb'] = rgb
-        state['depth'] = np.concatenate([depth,self.depth_buffer['-1'],self.depth_buffer['-2']],axis=2)
+        state['depth'] = np.concatenate(
+            [depth,self.depth_buffer['-1'],self.depth_buffer['-2']],
+            axis=2
+        )
         self.scan_buffer['-2'] = self.scan_buffer['-1']
         self.scan_buffer['-1'] = scan_data
         self.depth_buffer['-2'] = self.depth_buffer['-1']
         self.depth_buffer['-1'] = depth
-        if (self.min_dist_range > dist_to_target):
+        reward = np.abs(angle_to_target)/(2*np.pi)
+        reward = (np.pi-np.abs(target_angle))*np.exp(-dist_to_target)
+        if type(self.dist_to_target_prev) != type(None):
+            reward += 10*(self.dist_to_target_prev-dist_to_target)
+        self.dist_to_target_prev = dist_to_target
+
+        if crash:
             done = True
-            reward+=10
-        return state,reward,done
+            reward -= 100
+            print ('Robot status: crashed')
+        elif (self.min_dist_range > dist_to_target) and np.abs(target_angle)<0.1:
+            done = True
+            reward += 10
+            print ('Robot status: target achieved')
+        return state, reward, done
 
 
     def odom_to_data(self, odom):
@@ -220,8 +264,6 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.vel_y_prev = action[1]
         self.vel_phi_prev = action[2]
 
-        distance_decrease = (self.state_prev['goal'][0] - state['goal'][0]) * 5.0
-        reward += distance_decrease
         if done:
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
@@ -300,10 +342,10 @@ class srlEnv(gazebo_env.GazeboEnv):
         self.vel_phi_prev = 0.0
         self.scan_buffer = {'-2':None, '-1':None}
         self.depth_buffer = {'-2':None, '-1':None}
+
+        self.target = choice(self.target_set)+[np.random.uniform(-np.pi,np.pi,size=None)]
+
         self.dist_to_target_prev = None
-
-        self.target = choice(self.target_set)
-
         state,reward,done = self.calculate_observation(odom_data, [0.0, 0.0, 0.0])
 
         self.state_prev = state

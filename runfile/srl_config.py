@@ -5,19 +5,20 @@ class Settings(object):
 
     def default(self):
         self.load_buffer=True
+        self.load_weight=True
         self.gpu=True
 
         # learning parameters
         self.gamma=0.99 # discount factor
         self.critic_learning_rate=1e-3
         self.actor_learning_rate=1e-4
-        self.srl_learning_rate=1e-3
+        self.srl_learning_rate=1e-4
         self.tau=1e-3
         self.l2_penalty=1e-5
         self.max_buffer=1e+5
-        self.batch_size=256
+        self.batch_size=64
         self.max_step=1e+3
-        self.max_episode=1e+4
+        self.max_episode=1e+5
         self.max_epoch=1e+7
         
         # dimension setup
@@ -26,12 +27,12 @@ class Settings(object):
             'proximity':[4],
             'control':[3],
             'depth':[96,128,3],
-            'goal':[2]
+            'goal':[3]
         }
-        self.state_dim=[36]
+        self.state_dim=[48]
         self.action_dim=[3]        
-        self.action_max=[0.1,0.1,0.2]
-        self.action_min=[-0.1,-0.1,-0.2]
+        self.action_max=[0.2,0.2,0.5]
+        self.action_min=[-0.2,-0.2,-0.5]
 
         # loss
         self.c_srl = 0.25

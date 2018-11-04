@@ -35,16 +35,24 @@ if __name__ == '__main__':
     last_time_steps = numpy.ndarray(0)
 
     srl = srl.SRL(config)
-    srl.load(numpy.load('srl_weights.npy').item())
+    if config.load_weight:
+        try:
+            srl.load(numpy.load('srl_weights.npy').item())
+            print ('weight loaded.')
+        except:
+            print ('weight does not exist')
 
-    memory = replay.Replay(config.max_buffer, \
-                           config.batch_size, \
-                           observations=config.observation_networks.keys())
+    memory = replay.Replay(
+        config.max_buffer,
+        config.batch_size,
+        observations=config.observation_networks.keys()
+    )
     if config.load_buffer:
         try:
             memory.buffer=numpy.load('srl_buffer.npy').item()
+            print ('replay memory loaded.')
         except:
-            pass
+            print ('replay memory does not exist')
 
     initial_epsilon = srl.epsilon
 
@@ -88,43 +96,44 @@ if __name__ == '__main__':
             }
 
             memory.add(experience)
-            numpy.save('srl_buffer.npy',memory.buffer)
 
             cumulated_reward += reward
 
-            if highest_reward < cumulated_reward:
-                highest_reward = cumulated_reward
+            if highest_reward < cumulated_reward/(i+1):
+                highest_reward = cumulated_reward/(i+1)
 
             #nextState = ''.join(map(str, observation))
 
             if memory.buffersize > config.batch_size:
                 batch=memory.batch()
-                srl.learn(batch)
+                srl.learn(memory.batch())
+                batch.clear()
 
             # env._flush(force=True)
 
             if not(done):
                 state0 = state1
             else:
-                last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
+                last_time_steps = numpy.append(last_time_steps, [int(i+1)])
                 break
 
         if (x+1)%10==0:
             # plotter.plot(env)
-            numpy.save('srl_weights.npy',srl.return_variables())
+            numpy.save('srl_weights.npy', srl.return_variables())
+            numpy.save('srl_buffer.npy', memory.buffer)
         
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
-        print ("EP: "+str(x+1)+" - Reward: "+str(cumulated_reward)+"     Time: %d:%02d:%02d" % (h, m, s))
+        print ("EP: "+str(x+1)+" - Avg. reward: "+str(cumulated_reward/(i+1))+"     Time: %d:%02d:%02d" % (h, m, s))
 
     #Github table content
-    print ("\n|"+str(int(config.max_episode))+"|"+str(highest_reward)+"| PICTURE |")
+    # print ("\n|"+str(int(config.max_episode))+"|"+str(highest_reward)+"| PICTURE |")
 
     l = last_time_steps.tolist()
     l.sort()
 
     #print("Parameters: a="+str)
-    print("Overall score: {:0.2f}".format(last_time_steps.mean()))
-    print("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
+    # print ("Overall score: {:0.2f}".format(last_time_steps.mean()))
+    # print ("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
 
     env.close()
