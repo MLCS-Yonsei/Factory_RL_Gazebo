@@ -41,9 +41,16 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.action_space = 3
         self.reward_range = (-np.inf, np.inf)
         self._seed()
-        self.min_scan_range = 0.9
-        self.min_sonar_range = 0.3
-        self.min_dist_range = 0.3
+        self.min_scan_range = []
+        for idx in range(36):
+            self.min_scan_range.append(
+                min(
+                    np.abs(0.5/np.cos(np.pi*(2.0*idx+1.0/36.0))),
+                    np.abs(0.4/np.sin(np.pi*(2.0*idx+1.0/36.0)))
+                )
+            )
+        self.min_sonar_range = 0.1
+        self.min_dist_range = 0.1
         self.odom_data_tmp = [0,0,0,0,0,0]
         self.action_space = spaces.Box(low=np.array([-0.2,-0.2,-0.5]),high=np.array([0.2,0.2,0.5]))
         self.target_set=[[17.5,-4.5],[17.5,0.5],[12.5,0.5],[7.5,-4.5],[7.5,0.5],[2.5,-4.5],[-2.5,-4.5],[-2.5,0.5],[-2.5,5.5],[-7.5,5.5],[-12.5,0.5],[-17.5,-4.5],[-17.5,0.5]]
@@ -52,32 +59,22 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         scan_data=[]
         sonar_data = []
         done = False
+        crash = False
         reward=0
         #Scan normalize by dividing by 10
         for i, item in enumerate(scan.ranges):
             if i % 10 == 0:
                 scan_data.append(min(scan.ranges[i:i+9]))
-            if (self.min_scan_range > item > 0):
-                done = True
-                reward-=10
-        if done:
-            print('=====================================================================================')
-            print('LiDAR detected')
-            print('=====================================================================================')
+            if (self.min_scan_range[i/10] > item > 0):
+                crash = True
+        for idx, item in enumerate(scan_data):
+            if np.isinf(item):
+                scan_data[idx]= 11.0
         #Sonar unifier
         for item in [sonar_front,sonar_rear,sonar_left,sonar_right]:
             sonar_data.append(item.range)
             if (self.min_sonar_range > item.range > 0):
-                done = True
-                reward-=10  
-        if done:
-            print('=====================================================================================')
-            print('Sonar detected')
-            print('=====================================================================================')
-        #RGB reshape
-        rgb = np.reshape(np.fromstring(rgb.data, np.uint8),[96,128,3])
-        depth = np.reshape(np.fromstring(depth.data, np.uint8),[96,128,4])
-        rgbd = np.concatenate((rgb,depth),axis=2)
+                crash = True
         #Relative distance & angle
         dist_to_target = math.sqrt((self.target[0] - odom_data[0])**2 + (self.target[1] - odom_data[1])**2)
         print('Target pose : '),
@@ -92,16 +89,28 @@ class ddpgEnv(gazebo_env.GazeboEnv):
             angle_to_target -= 2 * np.pi
         if angle_to_target < -np.pi:
             angle_to_target += 2 * np.pi
-        state={}
-        state['vector'] = scan_data+sonar_data+[dist_to_target,angle_to_target]
-        state['rgbd'] = rgbd
-        if (self.min_dist_range > dist_to_target):
+        target_angle = self.target[2]-odom_data[5]
+        if target_angle > np.pi:
+            target_angle -= 2 * np.pi
+        if target_angle < -np.pi:
+            target_angle += 2 * np.pi
+        state = scan_data+sonar_data+[dist_to_target,angle_to_target,target_angle]
+        
+        reward = -2*(target_angle)**2
+        if type(self.dist_to_target_prev) != type(None):
+            reward += 10*(self.dist_to_target_prev-dist_to_target)
+        self.dist_to_target_prev = dist_to_target
+        
+        if crash:
             done = True
-            reward+=10
+            reward -= 100
+        elif (self.min_dist_range > dist_to_target) and np.abs(target_angle)<0.1:
+            done = True
+            reward += 100
             print('#####################################################################################')
             print('Goal arrived')
             print('#####################################################################################')
-        return state,reward,done
+        return state, reward, done
 
 
     def odom_to_data(self, odom):
@@ -189,8 +198,6 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.vel_y_prev = action[1]
         self.vel_z_prev = action[2]
 
-        distance_decrease = (self.state_prev['vector'][-2] - state['vector'][-2]) * 5.0
-        reward += distance_decrease
         if done:
             vel_cmd = Twist()
             vel_cmd.linear.x = 0.0
@@ -267,9 +274,10 @@ class ddpgEnv(gazebo_env.GazeboEnv):
         self.odom_data_tmp = odom_data
         self.ang_vel_prev = 0
         self.lin_vel_prev = 0
-        self.target=choice(self.target_set)
+        self.target = choice(self.target_set)+[np.random.uniform(-np.pi,np.pi,size=None)]
         print(self.target)
         print(odom_data)
+        self.dist_to_target_prev = None
         state,reward,done = self.calculate_observation(scan,sonar_front,sonar_rear,sonar_left,sonar_right,rgb,depth,odom_data)
 
         self.state_prev = state

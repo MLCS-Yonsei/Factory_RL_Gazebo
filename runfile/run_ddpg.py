@@ -64,10 +64,8 @@ if __name__ == '__main__':
             state1,reward,done,info = env.step(action)
             print("action: %s,  reset : %s" %(action,done))
             experience={
-                'vector_0':state0['vector'],
-                'rgbd_0':state0['rgbd'],
-                'vector_1':state1['vector'],
-                'rgbd_1':state0['rgbd'],
+                'state_0':state0,
+                'state_1':state1,
                 'action':action,
                 'reward':reward,
                 'done':done
