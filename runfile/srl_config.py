@@ -211,39 +211,39 @@ class Settings(object):
                 {
                     'type':'dense',
                     'activation':'prelu',
-                    'shape':[self.state_dim[0],108]
+                    'shape':[self.state_dim[0],200]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[108,54]
+                    'shape':[200,100]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[54,18]
+                    'shape':[100,50]
                 }
             ],
             'critic':[
                 {
                     'type':'dense',
                     'activation':'prelu',
-                    'shape':[self.state_dim[0]+self.action_dim[0],108]
+                    'shape':[self.state_dim[0]+self.action_dim[0],200]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[108,54]
+                    'shape':[200,100]
                 },
                 {
                     'type':'dense',
                     'activation':'softplus',
-                    'shape':[54,18]
+                    'shape':[100,50]
                 },
                 {
                     'type':'dense',
                     'activation':'None',
-                    'shape':[18,1]
+                    'shape':[50,1]
                 }
             ]
         }
