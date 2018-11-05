@@ -284,6 +284,10 @@ class srlEnv(gazebo_env.GazeboEnv):
             self.pause()
         except (rospy.ServiceException) as e:
             print ("/gazebo/pause_physics service call failed")
+        sys.stderr.write(
+            '\r dist. to goal:% 2.1f, reward: % 4.2f' \
+            %(state['goal'][0], reward)
+        )
         
         return state, reward, done, {}
 
@@ -292,9 +296,9 @@ class srlEnv(gazebo_env.GazeboEnv):
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
             subprocess.call('rosservice call /gazebo/set_model_state \'{model_state: { model_name: vehicle_v2' + ', pose: { position: { x: 0, y: 0 ,z: 0.3 }, orientation: {x: 0, y: 0, z: 0, w: 0 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }\'', shell=True)
-            print ("Robot position reset")
+            print ("\nRobot position reset")
         except (rospy.ServiceException) as e:
-            print ("/gazebo/reset_simulation service call failed")
+            print ("\n/gazebo/reset_simulation service call failed")
         
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
