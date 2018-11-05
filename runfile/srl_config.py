@@ -4,35 +4,35 @@ class Settings(object):
         self.default()
 
     def default(self):
-        self.load_buffer=True
-        self.load_weight=True
-        self.gpu=True
+        self.load_buffer = True
+        self.load_weight = True
+        self.gpu = True
 
         # learning parameters
-        self.gamma=0.99 # discount factor
-        self.critic_learning_rate=1e-3
-        self.actor_learning_rate=1e-4
-        self.srl_learning_rate=1e-4
-        self.tau=1e-3
-        self.l2_penalty=1e-5
-        self.max_buffer=1e+5
-        self.batch_size=512
-        self.max_step=1e+3
-        self.max_episode=1e+5
-        self.max_epoch=1e+7
+        self.gamma = 0.99 # discount factor
+        self.critic_learning_rate = 1e-3
+        self.actor_learning_rate = 1e-4
+        self.srl_learning_rate = 1e-4
+        self.tau = 1e-3
+        self.l2_penalty = 1e-5
+        self.max_buffer = 1e+5
+        self.batch_size = 512
+        self.max_step = 1e+3
+        self.max_episode = 1e+5
+        self.max_epoch = 1e+7
         
         # dimension setup
-        self.observation_dim={
-            'lidar':[36,1,3],
+        self.observation_dim = {
+            'lidar':[36, 1, 3],
             'proximity':[4],
             'control':[3],
-            'depth':[96,128,3],
+            'depth':[96, 128, 3],
             'goal':[3]
         }
-        self.state_dim=[48]
-        self.action_dim=[3]        
-        self.action_max=[0.2,0.2,0.174]
-        self.action_min=[-0.2,-0.2,-0.174]
+        self.state_dim = [48]
+        self.action_dim = [3]        
+        self.action_max = [0.2, 0.2, 0.174]
+        self.action_min = [-0.2, -0.2, -0.174]
 
         # loss
         self.c_srl = 0.25
