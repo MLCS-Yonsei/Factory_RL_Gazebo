@@ -9,7 +9,7 @@ class DDPG:
             sess_config.gpu_options.allow_growth=True
         else:
             sess_config=None
-        self.epsilon=0.5
+        self.epsilon=0.3
         self.action_dim=config.action_dim
         self.state_dim = config.state_dim
         self.gamma=tf.constant(config.gamma,dtype=tf.float32,name='gamma')

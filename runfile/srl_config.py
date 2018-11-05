@@ -31,8 +31,8 @@ class Settings(object):
         }
         self.state_dim=[48]
         self.action_dim=[3]        
-        self.action_max=[0.2,0.2,0.5]
-        self.action_min=[-0.2,-0.2,-0.5]
+        self.action_max=[0.2,0.2,0.174]
+        self.action_min=[-0.2,-0.2,-0.174]
 
         # loss
         self.c_srl = 0.25

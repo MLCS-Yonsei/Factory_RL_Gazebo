@@ -346,3 +346,5 @@ export GAZEBO_MASTER_URI=http://localhost:14015
 export ROS_MASTER_URI=http://localhost:11311
 export GAZEBO_MASTER_URI=http://localhost:13922
 >>>>>>> ed6d2c5c0f993552b45ec267345a2216daf6b82f
+export ROS_MASTER_URI=http://localhost:11311
+export GAZEBO_MASTER_URI=http://localhost:12418

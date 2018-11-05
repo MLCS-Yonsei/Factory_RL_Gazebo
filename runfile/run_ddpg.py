@@ -33,13 +33,20 @@ if __name__ == '__main__':
     last_time_steps = numpy.ndarray(0)
 
     ddpg = ddpg.DDPG(config)
+    if config.load_weight:
+        try:
+            ddpg.load(numpy.load('weights.npy').item())
+            print ('weight loaded.')
+        except:
+            print ('weight does not exist')
 
     memory = replay.Replay(config.max_buffer, config.batch_size)
     if config.load_buffer:
         try:
             memory.buffer=numpy.load('buffer.npy').item()
+            print ('replay memory loaded')
         except:
-            pass
+            print ('replay memory does not exist')
 
     initial_epsilon = ddpg.epsilon
 
@@ -71,7 +78,6 @@ if __name__ == '__main__':
                 'done':done
             }
             memory.add(experience)
-            numpy.save('buffer.npy',memory.buffer)
 
             cumulated_reward += reward
 
@@ -80,8 +86,10 @@ if __name__ == '__main__':
 
             #nextState = ''.join(map(str, observation))
 
-            batch=memory.batch()
-            ddpg.learn(batch)
+            if memory.buffersize > config.batch_size:
+                batch=memory.batch()
+                ddpg.learn(batch)
+                batch.clear()
 
             # env._flush(force=True)
 
@@ -91,9 +99,10 @@ if __name__ == '__main__':
                 last_time_steps = numpy.append(last_time_steps, [int(i + 1)])
                 break
 
-        if x%100==0:
+        if (x+1)%10==0:
             # plotter.plot(env)
             numpy.save('weights.npy',ddpg.return_variables())
+            numpy.save('buffer.npy',memory.buffer)
         
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)

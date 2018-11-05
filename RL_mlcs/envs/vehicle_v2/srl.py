@@ -201,10 +201,16 @@ class srlEnv(gazebo_env.GazeboEnv):
         except (rospy.ServiceException) as e:
             print ("/gazebo/unpause_physics service call failed")
 
+        lin_vel = (action[0]**2+action[1]**2)**0.5
         vel_cmd = Twist()
-        vel_cmd.linear.x = action[0]
-        vel_cmd.linear.y = action[1]
-        vel_cmd.angular.z = action[2]
+        if lin_vel > 0.2:
+            vel_cmd.linear.x = 0.2*action[0]/lin_vel
+            vel_cmd.linear.y = 0.2*action[1]/lin_vel
+            vel_cmd.angular.z = 0.2*action[2]/lin_vel
+        else:
+            vel_cmd.linear.x = action[0]
+            vel_cmd.linear.y = action[1]
+            vel_cmd.angular.z = action[2]
         self.vel_pub.publish(vel_cmd)
         
         rostime = None
