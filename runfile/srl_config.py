@@ -16,7 +16,7 @@ class Settings(object):
         self.tau=1e-3
         self.l2_penalty=1e-5
         self.max_buffer=1e+5
-        self.batch_size=64
+        self.batch_size=512
         self.max_step=1e+3
         self.max_episode=1e+5
         self.max_epoch=1e+7
