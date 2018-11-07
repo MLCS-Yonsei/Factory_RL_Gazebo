@@ -225,6 +225,7 @@ class SRL:
                 2
             )
         )
+        tf.summary.scalar('reward_prediction_loss', rew_loss)
         fwd_loss = tf.reduce_mean(
             tf.reduce_sum(
                 tf.pow(
@@ -234,6 +235,7 @@ class SRL:
                 axis=1
             )
         )
+        tf.summary.scalar('state_prediction_loss', fwd_loss)
         inv_loss = None # impossible to solve on continuous domain
         slow_loss = tf.reduce_mean(
             tf.reduce_sum(
@@ -244,24 +246,26 @@ class SRL:
                 axis=1
             )
         )
-        div_loss = tf.reduce_mean(
-            tf.exp(
-                -tf.reduce_sum(
-                    tf.pow(
-                        tf.subtract(
-                            self.state,
-                            tf.reduce_mean(self.state, axis=0)
-                        ),
-                        2
-                    ),
-                    axis=1
-                )
-            )
-        )
+        tf.summary.scalar('slowness_loss', slow_loss)
+        # div_loss = tf.reduce_mean(
+        #     tf.exp(
+        #         -tf.reduce_sum(
+        #             tf.pow(
+        #                 tf.subtract(
+        #                     self.state,
+        #                     tf.reduce_mean(self.state, axis=0)
+        #                 ),
+        #                 2
+        #             ),
+        #             axis=1
+        #         )
+        #     )
+        # )
+        # tf.summary.scalar('diversity_loss', div_loss)
         srl_loss = config.c_srl*(
             config.c_rew*rew_loss+\
             config.c_slow*slow_loss+\
-            config.c_div*div_loss+\
+            # config.c_div*div_loss+\
             config.c_fwd*fwd_loss
         )
 
@@ -271,6 +275,9 @@ class SRL:
         q_loss = \
             tf.reduce_mean(tf.pow(self.critic-y, 2))\
             +config.l2_penalty*_l2_loss(self.var_list['critic'])
+        tf.summary.scalar('Q_loss', q_loss)
+
+        self.merged = tf.summary.merge_all()
 
         # update all
         self.update_all = \
@@ -335,6 +342,10 @@ class SRL:
         self.sess.run(self.var_init)
         self.sess.run(self.assign_target)
 
+        # Tensorboard setup
+        self.epoch = 0
+        self.writer = tf.summary.FileWriter(config.summary_dir, self.sess.graph)
+
 
     def chooseAction(self, observation):
 
@@ -356,6 +367,8 @@ class SRL:
 
 
     def learn(self, batch):
+
+        self.epoch += 1
 
         fd = {}
         for key in self.observation_dim.keys():
@@ -381,6 +394,10 @@ class SRL:
         fd[self.target_state] = target_state
 
         self.sess.run(self.update_all, feed_dict=fd)
+
+        if self.epoch%10 == 0:
+            summary = self.sess.run(self.merged, feed_dict=fd)
+            self.writer.add_summary(summary, self.epoch)
 
         fd.clear()
         for key in self.observation_dim:
