@@ -8,6 +8,8 @@ class Settings(object):
         self.load_weight = True
         self.gpu = True
 
+        self.summary_dir = 'tf_summary'
+
         # learning parameters
         self.gamma = 0.99 # discount factor
         self.critic_learning_rate = 1e-3
@@ -19,7 +21,7 @@ class Settings(object):
         self.batch_size = 512
         self.max_step = 1e+3
         self.max_episode = 1e+5
-        self.max_epoch = 1e+7
+        self.max_epoch = 1e+8
         
         # dimension setup
         self.observation_dim = {
@@ -35,8 +37,8 @@ class Settings(object):
         self.action_min = [-0.2, -0.2, -0.174]
 
         # loss
-        self.c_srl = 0.25
-        self.c_rew = 0.5
+        self.c_srl = 0.5
+        self.c_rew = 0.02
         self.c_slow = 1.0
         self.c_div = 1.0
         self.c_inv = 0.5
