@@ -49,7 +49,7 @@ if __name__ == '__main__':
     )
     if config.load_buffer:
         try:
-            memory.buffer=numpy.load('srl_buffer.npy').item()
+            memory.load(numpy.load('srl_buffer.npy').item())
             print ('replay memory loaded.')
         except:
             print ('replay memory does not exist')
@@ -60,6 +60,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     highest_reward = 0
+    reward_summary = []
 
     for x in range(int(config.max_episode)):
         done = False
@@ -124,7 +125,9 @@ if __name__ == '__main__':
         
         m, s = divmod(int(time.time() - start_time), 60)
         h, m = divmod(m, 60)
-        print ("EP: "+str(x+1)+" - Avg. reward: "+str(cumulated_reward/(i+1))+"     Time: %d:%02d:%02d" % (h, m, s))
+        print ("\nEP: "+str(x+1)+" - Avg. reward: "+str(cumulated_reward/(i+1))+"     Time: %d:%02d:%02d" % (h, m, s))
+        reward_summary.append(cumulated_reward/(i+1))
+        numpy.save('reward_summary.npy', reward_summary)
 
     #Github table content
     # print ("\n|"+str(int(config.max_episode))+"|"+str(highest_reward)+"| PICTURE |")

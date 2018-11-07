@@ -161,11 +161,11 @@ class srlEnv(gazebo_env.GazeboEnv):
         if crash:
             done = True
             reward -= 100
-            print ('Robot status: crashed')
+            print (' Robot status: crashed')
         elif (self.min_dist_range > dist_to_target) and np.abs(target_angle)<0.1:
             done = True
             reward += 10
-            print ('Robot status: target achieved')
+            print (' Robot status: target achieved')
         return state, reward, done
 
 
