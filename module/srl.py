@@ -7,7 +7,7 @@ class SRL:
     def __init__(self, config):
 
         # get parameters
-        self.epsilon = 0.3
+        self.epsilon = 0.1
         self.gamma = tf.constant(config.gamma, dtype=tf.float32, name='gamma')
         self.batch_size = config.batch_size
 
