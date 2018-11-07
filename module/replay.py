@@ -3,7 +3,7 @@ from numpy import random
 class Replay(object):
     
     def __init__(self, max_buffer, batch_size, observations=False):
-        self.max_buffer = max_buffer
+        self.max_buffer = int(max_buffer)
         self.batch_size = batch_size
         self.currentPosition = -1
         if not observations:
@@ -44,7 +44,7 @@ class Replay(object):
         self.buffer['currentPosition'] = self.currentPosition
     
     def load(self, buffer):
-        self.buffersize = max(buffer['buffersize'], self.max_buffer)
+        self.buffersize = min(buffer['buffersize'], self.max_buffer)
         idx = buffer['currentPosition']+1
         if self.currentPosition > self.max_buffer-1:
             self.currentPosition = self.max_buffer-1
@@ -53,7 +53,8 @@ class Replay(object):
         else:
             self.currentPosition = buffer['currentPosition']
             for key in self.bufferkeys:
-                self.buffer[key] = buffer[key][0:idx]+buffer[key][-self.max_buffer+idx:]
+                self.buffer[key] = \
+                    buffer[key][0:idx]+buffer[key][-self.max_buffer+idx:]
 
     def clear(self):
         self.currentPosition = -1
